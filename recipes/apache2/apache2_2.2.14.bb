@@ -94,6 +94,11 @@ do_configure() {
 	oe_runconf
 }
 
+do_configure_append() {
+	rm srclib/apr-util/config.log
+	rm config.log
+}
+
 do_compile_prepend() {
 	ln -sf ${S}/srclib/apr/${TARGET_PREFIX}libtool ${S}/srclib/apr/libtool
 }	
