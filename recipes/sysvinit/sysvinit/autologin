@@ -1,0 +1,4 @@
+#!/bin/sh
+cat /etc/issue
+echo "Autologin Script"
+exec login -f root

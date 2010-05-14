@@ -1,0 +1,44 @@
+export OETREE="/home/sources/OE"
+
+BBPATH=${OETREE}/bt-overlay/:${OETREE}/openembedded/
+PKGDIR=${OETREE}/bt-overlay/ 
+DL_DIR=${OETREE}/downloads
+echo Setting up dev env for Ångström
+
+if [ -z ${ORG_PATH} ] ; then
+	ORG_PATH=${PATH}
+	export ORG_PATH
+fi
+
+if [ -z ${ORG_LD_LIBRARY_PATH} ] ; then
+	ORG_LD_LIBRARY_PATH=${LD_LIBRARY_PATH}
+	export ORG_LD_LIBRARY_PATH
+fi
+
+PATH=${OETREE}/bitbake-1.8.18/bin:${ORG_PATH}
+
+cd $PKGDIR
+
+LD_LIBRARY_PATH=
+export PATH LD_LIBRARY_PATH BBPATH
+export LANG=C
+export BB_ENV_EXTRAWHITE="MACHINE DISTRO OETREE ANGSTROM_MODE ANGSTROMLIBC LIBC"
+
+# Enable devshell with screen and bash
+#export SHELLCMDS='-s /bin/bash'
+
+#export SCREEN_TERMCMD='screen -D -m -t "$TERMWINDOWTITLE"'
+#export SCREEN_TERMCMDRUN='${SCREEN_TERMCMD} $SHELLCMDS'
+
+#export TERMCMD="${SCREEN_TERMCMD}"
+#export TERMCMDRUN="${SCREEN_TERMCMDRUN}"
+
+#export GNOME_TERMCMD='gnome-terminal --disable-factory -t "$TERMWINDOWTITLE"'
+#export GNOME_TERMCMDRUN='${GNOME_TERMCMD} -x $SHELLCMDS'
+
+#export XTERM_TERMCMD='xterm -T "$TERMWINDOWTITLE"'
+#export XTERM_TERMCMDRUN='${XTERM_TERMCMD} -e $SHELLCMDS'
+#export KONSOLE_TERMCMD='konsole -T "$TERMWINDOWTITLE"'
+#export KONSOLE_TERMCMDRUN='${KONSOLE_TERMCMD} -e $SHELLCMDS'
+
+echo "Altered environment for OE Development"
