@@ -11,7 +11,9 @@ SRC_URI = "http://apache.mirrors.tds.net/httpd/httpd-${PV}.tar.bz2 \
 	   file://server-makefile-patch;patch=1 \
 	   file://configure.in.patch;patch=1 \
 	   file://apr.h.in.patch;patch=1 \
-           file://init"
+       file://init \
+       file://httpd.conf \
+       file://stunnel.pem"
 
 #
 # over-ride needed since apache unpacks into httpd
@@ -112,6 +114,11 @@ do_install_append() {
 		    -e 's,/etc/,${sysconfdir}/,g' \
 		    -e 's,/usr/,${prefix}/,g' > ${D}/${sysconfdir}/init.d/${PN}
 	chmod 755 ${D}/${sysconfdir}/init.d/${PN}
+# installing the BTicino version of conf file
+	rm -f ${D}/${sysconfdir}/${PN}/httpd.conf
+	install -m 0644 ${WORKDIR}/httpd.conf ${D}${sysconfdir}/${PN}/httpd.conf
+# installing the BTicino SSL certificate
+	install -m 0644 ${WORKDIR}/stunnel.pem ${D}${sysconfdir}/stunnel.pem
 # remove the goofy original files...
 	rm -rf ${D}/${sysconfdir}/${PN}/original
 # Expat should be found in the staging area via DEPENDS...
