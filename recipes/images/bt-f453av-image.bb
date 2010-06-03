@@ -7,6 +7,7 @@ require bt-common-image.inc
 ROOTFS_SIZE = "102400"
 
 IMAGE_INSTALL += "task-base-extended"
+IMAGE_INSTALL += " libstdc++ "
 IMAGE_INSTALL += "apache2 modphp"
 
 export IMAGE_BASENAME = "bt-f453av-image"
