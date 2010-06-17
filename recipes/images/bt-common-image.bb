@@ -6,5 +6,6 @@ require bt-common-image.inc
 ROOTFS_SIZE = "10240"
 
 IMAGE_INSTALL += "task-base-extended"
+IMAGE_INSTALL += "vsftpd"
 
 export IMAGE_BASENAME = "bt-common-image"
