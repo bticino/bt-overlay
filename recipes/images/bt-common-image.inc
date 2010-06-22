@@ -13,6 +13,9 @@ IMAGE_INSTALL = "\
     angstrom-version \
     "
 
+IMAGE_INSTALL += "vsftpd"
+IMAGE_INSTALL += "zip unzip"
+
 IMAGE_LINGUAS = ""
 
 inherit image
