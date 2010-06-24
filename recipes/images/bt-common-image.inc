@@ -15,6 +15,7 @@ IMAGE_INSTALL = "\
 
 IMAGE_INSTALL += "vsftpd"
 IMAGE_INSTALL += "zip unzip"
+IMAGE_INSTALL += "devmem2"
 
 IMAGE_LINGUAS = ""
 
