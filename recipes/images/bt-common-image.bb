@@ -2,8 +2,8 @@
 # gives you a small image with package manager
 require bt-common-image.inc
 
-# The size of the uncompressed ramdisk is 8MB
-ROOTFS_SIZE = "10240"
+# The size of the uncompressed ramdisk is 190MB
+ROOTFS_SIZE = "194560"
 
 IMAGE_INSTALL += "task-base-extended"
 
