@@ -18,6 +18,7 @@ IMAGE_INSTALL += "zip unzip"
 IMAGE_INSTALL += "devmem2"
 IMAGE_INSTALL += "dropbear"
 IMAGE_INSTALL += "iperf"
+IMAGE_INSTALL += "mtd-utils"
 
 IMAGE_LINGUAS = ""
 
