@@ -1,5 +1,5 @@
 # Where to store sources
-DL_DIR = "/home/sources/OE/downloads"
+DL_DIR = "${OETREE}/downloads"
 
 INHERIT += " rm_work devshell "
 
@@ -7,12 +7,12 @@ INHERIT += " rm_work devshell "
 ASSUME_PROVIDED += "gdk-pixbuf-csource-native imagemagick-native librsvg-native"
 
 # Which files do we want to parse:
-BBFILES := "/home/sources/OE/openembedded/recipes/*/*.bb"
-BBFILES += "/home/sources/OE/bt-overlay/recipes/*/*.bb"
+BBFILES := "${OETREE}/openembedded/recipes/*/*.bb"
+BBFILES += "${OETREE}/bt-overlay/recipes/*/*.bb"
 BBMASK = ""
 
 # Set the collections
-COLLECTIONS = "/home/sources/OE/bt-overlay/ /home/sources/OE/openembedded/"
+COLLECTIONS = "${OETREE}/bt-overlay/ ${OETREE}/openembedded/"
 
 # Disable DropBear for now due to export restrictions
 DISTRO_SSH_DAEMON = ""
@@ -22,11 +22,11 @@ DISTRO_EXTRA_RDEPENDS += "angstrom-version"
 IMAGE_FSTYPES += " tar.bz2 ext3 "
 
 # Set TMPDIR instead of defaulting it to $pwd/tmp
-TMPDIR = "/home/sources/OE/${DISTRO}-dev"
+TMPDIR = "${OETREE}/${DISTRO}-dev"
 
 # Make use of SMP and fast disks
-PARALLEL_MAKE = "-j8"
-BB_NUMBER_THREADS = "8"
+PARALLEL_MAKE = "-j4"
+BB_NUMBER_THREADS = "2"
 
 #tinderbox
 #INHERIT += "oestats-client"
@@ -39,7 +39,7 @@ MACHINE ?= "dm365-evm"
 BBINCLUDELOGS = "yes"
 
 # for DEVSHELL
-SCREEN_TERMCMD = 'screen -S DEVSHELL.fabio -D -m -t "$TERMWINDOWTITLE"'
+SCREEN_TERMCMD = 'screen -S DEVSHELL.user -D -m -t "$TERMWINDOWTITLE"'
 SCREEN_TERMCMDRUN = '${SCREEN_TERMCMD} $SHELLCMDS'
 TERMCMD = "${SCREEN_TERMCMD}"
 TERMCMDRUN = "${SCREEN_TERMCMDRUN}"
