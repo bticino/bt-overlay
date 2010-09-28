@@ -3,10 +3,13 @@ DESCRIPTION = "udev is a daemon which dynamically creates and removes device nod
 the hotplug package and requires a kernel not older than 2.6.12."
 LICENSE = "GPLv2+"
 
+PR = "r22"
+
 # Untested
 DEFAULT_PREFERENCE = "-1"
 
-PR = "r21"
+# Needed for udev-extras
+DEPENDS = "gperf-native usbutils acl glib-2.0"
 
 # needed for init.d script
 RDEPENDS_${PN} += "udev-utils"
@@ -39,23 +42,28 @@ SRC_URI_append_bug = " \
 
 PACKAGE_ARCH_bug = "bug"
 
-inherit update-rc.d autotools_stage
+inherit update-rc.d autotools
 
-# Put stuff in /lib and /sbin
-export sbindir="${base_sbindir}"
-export exec_prefix=""
 EXTRA_OECONF += " --with-udev-prefix= \
                   --with-libdir-name=${base_libdir} \
+                  --disable-introspection \
+                  ac_cv_file__usr_share_pci_ids=yes \
+                  ac_cv_file__usr_share_hwdata_pci_ids=no \
+                  ac_cv_file__usr_share_misc_pci_ids=no \
+                  --sbindir=${base_sbindir} \
+                  --libexecdir=${base_libdir}/udev \
+                  --with-rootlibdir=${base_libdir} \
 "
 
 INITSCRIPT_NAME = "udev"
 INITSCRIPT_PARAMS = "start 03 S ."
 
-PACKAGES =+ "udev-utils libvolume-id libvolume-id-dev"
+PACKAGES =+ "libudev libgudev udev-utils"
 
-FILES_libvolume-id-dev = "${includedir}/libvolume_id.h ${libdir}/libvolume_id.a ${libdir}/libvolume_id.so ${libdir}/pkgconfig/libvolume_id.pc"
-FILES_udev-utils = "${usrbindir}/udevinfo ${sbindir}/udevadm ${usrbindir}/udevtest"
-FILES_libvolume-id = "${base_libdir}/libvolume_id.so.*"
+FILES_libudev = "${libdir}/libudev.so.*"
+FILES_libgudev = "${libdir}/libgudev*.so.*"
+
+FILES_udev-utils = "${bindir}/udevinfo ${base_sbindir}/udevadm ${bindir}/udevtest"
 
 RPROVIDES_${PN} = "hotplug"
 FILES_${PN} += "${usrbindir}/* ${usrsbindir}/udevd"
@@ -63,7 +71,7 @@ FILES_${PN}-dbg += "${usrbindir}/.debug ${usrsbindir}/.debug"
 
 # udev installs binaries under $(udev_prefix)/lib/udev, even if ${libdir}
 # is ${prefix}/lib64
-FILES_${PN} += "/lib/udev/* /lib/udev/*"
+FILES_${PN} += "/lib/udev* ${libdir}/ConsoleKit"
 FILES_${PN}-dbg += "/lib/udev/.debug"
 
 do_install () {
@@ -76,11 +84,6 @@ do_install () {
 
 	install -d ${D}${sysconfdir}/default
 	install -m 0755 ${WORKDIR}/default ${D}${sysconfdir}/default/udev
-
-	# Move udev rules from $(udev_prefix)/lib to /etc.
-	# This is hardcoded to $(udev_prefix)/lib/udev/rules.d in the
-	# Makefile, even if libdir is lib64.
-	mv ${D}/lib/udev/rules.d ${D}${sysconfdir}/udev/
 
  	cp ${S}/rules/rules.d/* ${D}${sysconfdir}/udev/rules.d/
 	cp ${S}/rules/packages/* ${D}${sysconfdir}/udev/rules.d/
@@ -115,36 +118,11 @@ do_install_append_bug() {
 	install -m 0644 ${WORKDIR}/bmi_eventpipe.sh ${D}${sysconfdir}/udev/scripts/bmi_eventpipe.sh
 }
 
-do_install_append_hipox() {
-	# we don't like persistent net if rules at hipox machine
-	rm -f ${D}${sysconfdir}/udev/rules.d/75-persistent-net-generator.rules
-}
-
 # Create the cache after checkroot has run
 pkg_postinst_${PN}_append() {
-update-rc.d $OPT udev-cache start 12 S .
-
-if [ -d $D/lib/udev/rules.d ] ; then
-	echo "$D/lib/udev/rules.d is not a symlink, fixing that"
-	mv $D/lib/udev/rules.d/* $D${sysconfdir}/udev/rules.d/
-	rm -rf $D/lib/udev/rules.d
-	ln -sf ${sysconfdir}/udev/rules.d $D/lib/udev/
-fi
+	update-rc.d $OPT udev-cache start 12 S .
 }
 
-do_stage_append() {
-        install -m 0644 ${S}/extras/volume_id/lib/libvolume_id.h ${STAGING_INCDIR}
-        oe_libinstall -C extras/volume_id/lib -so libvolume_id ${STAGING_LIBDIR}
-        oe_libinstall -C udev/lib -so libudev ${STAGING_LIBDIR}
-        # Since we change exec_prefix above, autotools_stage_all will not see the .pc files
-        # When we upgrade to 145 with the path bugs fixed we can drop all this (see poky)
-        install -d ${STAGING_DIR_TARGET}${prefix}${libdir}/pkgconfig/
-        install ${S}/extras/volume_id/lib/libvolume_id.pc ${STAGING_DIR_TARGET}${prefix}${libdir}/pkgconfig/
-        install ${S}/udev/lib/libudev.pc ${STAGING_DIR_TARGET}${prefix}${libdir}/pkgconfig/
-	install -d ${STAGING_DIR_TARGET}${prefix}${includedir}/
-        install ${S}/extras/volume_id/lib/libvolume_id.h ${STAGING_DIR_TARGET}${prefix}${includedir}/
-        install ${S}/udev/lib/libudev.h ${STAGING_DIR_TARGET}${prefix}${includedir}/
-}
 
 SRC_URI[md5sum] = "86382b7bbc64459e714c65a2a4e10916"
 SRC_URI[sha256sum] = "001be4a8963c48e7debc82c6078562d087a2979da63e558a5e3613c03725c377"
