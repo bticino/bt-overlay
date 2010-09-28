@@ -1,0 +1,82 @@
+From 3eab488f0cc6f7c190020c71f8c974234c49e621 Mon Sep 17 00:00:00 2001
+From: Mauro Sarchi <mauro.sarchi@bticino.it>
+Date: Mon, 4 Jan 2010 14:34:37 +0100
+Subject: [PATCH 28/30] Sarchi: aggiunti log
+
+---
+ compile_btweb            |    1 +
+ upnp/src/api/upnpapi.c   |   17 +++++++++++++++++
+ upnp/src/api/upnpdebug.c |    4 ++++
+ 3 files changed, 22 insertions(+), 0 deletions(-)
+
+diff --git a/upnp/src/api/upnpapi.c b/upnp/src/api/upnpapi.c
+index 3d64543..71a27f0 100644
+--- a/upnp/src/api/upnpapi.c
++++ b/upnp/src/api/upnpapi.c
+@@ -1401,12 +1401,19 @@ UpnpUnRegisterClient( IN UpnpClient_Handle Hnd )
+                          "Inside UpnpUnRegisterClient \n" );
+          )
+         HandleLock(  );
++
++    DBGONLY( UpnpPrintf( UPNP_ALL, API, __FILE__, __LINE__,
++                         "HandleLock called \n" ));
++
+     if( !UpnpSdkClientRegistered ) {
+         HandleUnlock(  );
+         return UPNP_E_INVALID_HANDLE;
+     }
+     HandleUnlock(  );
+ 
++    DBGONLY( UpnpPrintf( UPNP_ALL, API, __FILE__, __LINE__,
++                         "HandleUnlock called \n" ));
++
+ #if EXCLUDE_GENA == 0
+     if( genaUnregisterClient( Hnd ) != UPNP_E_SUCCESS )
+         return UPNP_E_INVALID_HANDLE;
+@@ -1417,8 +1424,15 @@ UpnpUnRegisterClient( IN UpnpClient_Handle Hnd )
+         return UPNP_E_INVALID_HANDLE;
+     }
+     //clean up search list
++    DBGONLY( UpnpPrintf( UPNP_ALL, API, __FILE__, __LINE__,
++                         "begin while on node \n" ));
++
+     node = ListHead( &HInfo->SsdpSearchList );
+     while( node != NULL ) {
++
++        DBGONLY( UpnpPrintf( UPNP_ALL, API, __FILE__, __LINE__,
++                             "cicle on node \n" ));
++
+         searchArg = ( SsdpSearchArg * ) node->item;
+         if( searchArg ) {
+             free( searchArg->searchTarget );
+@@ -1428,6 +1442,9 @@ UpnpUnRegisterClient( IN UpnpClient_Handle Hnd )
+         node = ListHead( &HInfo->SsdpSearchList );
+     }
+ 
++    DBGONLY( UpnpPrintf( UPNP_ALL, API, __FILE__, __LINE__,
++                         "end while on node \n" ));
++
+     ListDestroy( &HInfo->SsdpSearchList, 0 );
+     FreeHandle( Hnd );
+     UpnpSdkClientRegistered = 0;
+diff --git a/upnp/src/api/upnpdebug.c b/upnp/src/api/upnpdebug.c
+index 593c4d2..ed0ffbb 100644
+--- a/upnp/src/api/upnpdebug.c
++++ b/upnp/src/api/upnpdebug.c
+@@ -105,9 +105,13 @@ UpnpInitLog(  )
+ 
+     if( DEBUG_TARGET == 1 ) {
+         if( ( ErrFileHnd = fopen( errFileName, "a" ) ) == NULL )
++            {
+             return -1;
++            }
+         if( ( InfoFileHnd = fopen( infoFileName, "a" ) ) == NULL )
++        {
+             return -1;
++        }
+     }
+     return UPNP_E_SUCCESS;
+ }
+-- 
+1.7.0.4
+

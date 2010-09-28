@@ -1,0 +1,67 @@
+From 98705f6a91fdd7df2495e5a9bb2e4f677f2d78eb Mon Sep 17 00:00:00 2001
+From: mauro sarchi <mauro@myhometrac.(none)>
+Date: Tue, 7 Apr 2009 14:33:00 +0200
+Subject: [PATCH 23/30] M.Sarchi (S. Maccazola): corretto problema di memory leakage
+
+---
+ upnp/inc/upnp.h                      |    2 +-
+ upnp/src/genlib/net/http/webserver.c |    2 +-
+ upnp/src/uuid/uuid.c                 |    6 +++---
+ 3 files changed, 5 insertions(+), 5 deletions(-)
+ mode change 100644 => 100755 upnp/src/genlib/net/http/webserver.c
+
+diff --git a/upnp/inc/upnp.h b/upnp/inc/upnp.h
+index dfd6feb..96b0a10 100644
+--- a/upnp/inc/upnp.h
++++ b/upnp/inc/upnp.h
+@@ -612,7 +612,7 @@ typedef enum Upnp_EventType_e Upnp_EventType;
+     a globally unique id (GUID) and should not be modified.
+   */
+     
+-typedef char Upnp_SID[44];
++typedef char Upnp_SID[48];
+ 
+ /** @name Upnp_SType
+     @memo Represents the different types of searches that
+diff --git a/upnp/src/genlib/net/http/webserver.c b/upnp/src/genlib/net/http/webserver.c
+old mode 100644
+new mode 100755
+index c394c37..381e26c
+--- a/upnp/src/genlib/net/http/webserver.c
++++ b/upnp/src/genlib/net/http/webserver.c
+@@ -1270,7 +1270,7 @@ process_request( IN http_message_t * req,
+     if ( (!strcmp(request_doc,"/")) && (default_file) )
+     {
+         free(request_doc);
+-        request_doc=malloc(strlen(default_file));
++        request_doc=malloc(strlen(default_file)+1); // MS 
+         strcpy(request_doc,default_file);
+     }
+ 
+diff --git a/upnp/src/uuid/uuid.c b/upnp/src/uuid/uuid.c
+index c73a0da..93c9491 100644
+--- a/upnp/src/uuid/uuid.c
++++ b/upnp/src/uuid/uuid.c
+@@ -61,8 +61,7 @@ uuid_create( uuid_upnp * uid )
+     uuid_node_t node;
+     uuid_node_t last_node;
+     int f;
+-
+-    /*
++	/*
+        acquire system wide lock so we're alone 
+      */
+     UUIDLock(  );
+@@ -86,7 +85,8 @@ uuid_create( uuid_upnp * uid )
+        if no NV state, or if clock went backwards, or node ID changed
+        (e.g., net card swap) change clockseq 
+      */
+-    if( !f || memcmp( &node, &last_node, sizeof( uuid_node_t ) ) )
++//    if( !f || memcmp( &node, &last_node, sizeof( uuid_node_t ) ) ) 
++    if( !f || &node || &last_node || memcmp( &node, &last_node, sizeof( uuid_node_t ) ) )
+         clockseq = true_random(  );
+     else if( timestamp < last_time )
+         clockseq++;
+-- 
+1.7.0.4
+

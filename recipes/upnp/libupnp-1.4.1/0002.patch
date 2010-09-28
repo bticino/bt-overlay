@@ -1,0 +1,47 @@
+From d2f5cf0ebe4d727d8778eba0c6feaf2a13500d7f Mon Sep 17 00:00:00 2001
+From: cvs <cvs>
+Date: Thu, 7 Dec 2006 13:44:33 +0000
+Subject: [PATCH 02/30] Agresta:
+  # sistemate stampe
+
+---
+ upnp/src/ssdp/ssdp_server.c |    8 ++++----
+ 1 files changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/upnp/src/ssdp/ssdp_server.c b/upnp/src/ssdp/ssdp_server.c
+index 9c7f788..797c9e8 100644
+--- a/upnp/src/ssdp/ssdp_server.c
++++ b/upnp/src/ssdp/ssdp_server.c
+@@ -1063,17 +1063,17 @@ get_ssdp_sockets( MiniServerSockArray * out )
+ 
+     }
+ 
+-printf("NOME NAME AD SURNAME:%s\n",ifReq.ifr_name);
++//printf("NOME NAME AD SURNAME:%s\n",ifReq.ifr_name);
+ strncpy(if_info.ifr_name, ifReq.ifr_name, IFNAMSIZ-1);
+ }
+     if (ioctl(ssdpSock, SIOCGIFINDEX, &if_info) == -1) {
+-	printf("\nSIOCGIFINDEX ERROR\n");
++	//printf("\nSIOCGIFINDEX ERROR\n");
+ 		DBGONLY(UpnpPrintf( UPNP_CRITICAL, SSDP, __FILE__, __LINE__,"Error retrieving socket index !!!\n");)
+ 		close(ssdpSock);
+ 		return -1;
+ 	}
+     ssdpMcastAddr.imr_ifindex = if_info.ifr_ifindex;
+-    printf("\nprima di tutto SIOCGIFINDEX andata a buon fine. Secondo if_info.ifr_ifindex=%d\n",if_info.ifr_ifindex);
++   // printf("\nprima di tutto SIOCGIFINDEX andata a buon fine. Secondo if_info.ifr_ifindex=%d\n",if_info.ifr_ifindex);
+     ssdpMcastAddr.imr_address.s_addr = htonl( INADDR_ANY );
+     ssdpMcastAddr.imr_multiaddr.s_addr = inet_addr( SSDP_IP );
+ 
+@@ -1084,7 +1084,7 @@ strncpy(if_info.ifr_name, ifReq.ifr_name, IFNAMSIZ-1);
+     if( pippo=setsockopt( ssdpSock, IPPROTO_IP, IP_ADD_MEMBERSHIP,
+                     ( char * )&ssdpMcastAddr,
+                     sizeof( struct ip_mreqn ) ) != 0 ) {
+-        printf("\n\n CICCIOBELLO SPUTACI SOTTO \n %d\n\n",pippo);
++        //printf("\n\n CICCIOBELLO SPUTACI SOTTO \n %d\n\n",pippo);
+         DBGONLY( UpnpPrintf
+                  ( UPNP_CRITICAL, SSDP, __FILE__, __LINE__,
+                    "Error in joining" " multicast group !!!\n" );
+-- 
+1.7.0.4
+

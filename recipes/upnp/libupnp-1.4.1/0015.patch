@@ -1,0 +1,35 @@
+From dfb0a576af8b8c72b67d38785754755cfe041bc4 Mon Sep 17 00:00:00 2001
+From: cvs <cvs>
+Date: Tue, 17 Jun 2008 08:25:17 +0000
+Subject: [PATCH 15/30] added encoding="utf-8" at line 375 and 424
+ Lorenzo
+
+---
+ ixml/src/ixml.c |    4 ++--
+ 1 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/ixml/src/ixml.c b/ixml/src/ixml.c
+index 32388bb..4388d73 100644
+--- a/ixml/src/ixml.c
++++ b/ixml/src/ixml.c
+@@ -372,7 +372,7 @@ ixmlPrintDocument(IXML_Document *doc)
+     }
+ 
+     ixml_membuf_init( buf );
+-    ixml_membuf_append_str( buf, "<?xml version=\"1.0\"?>\r\n" );
++    ixml_membuf_append_str( buf, "<?xml version=\"1.0\" encoding=\"utf-8\"?>\r\n" );
+     ixmlPrintDomTree( rootNode, buf );
+     return buf->buf;
+ 
+@@ -421,7 +421,7 @@ ixmlDocumenttoString(IXML_Document *doc)
+     }
+ 
+     ixml_membuf_init( buf );
+-    ixml_membuf_append_str( buf, "<?xml version=\"1.0\"?>\r\n" );
++    ixml_membuf_append_str( buf, "<?xml version=\"1.0\" encoding=\"utf-8\"?>\r\n" );
+     ixmlDomTreetoString( rootNode, buf );
+     return buf->buf;
+ 
+-- 
+1.7.0.4
+

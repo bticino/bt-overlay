@@ -1,0 +1,189 @@
+diff -urN ../../angstrom-dev/work/armv5te-none-linux-gnueabi/libupnp-1.4.1-r1/libupnp-1.4.1/upnp/inc/upnp.h ./upnp/inc/upnp.h
+--- ../../angstrom-dev/work/armv5te-none-linux-gnueabi/libupnp-1.4.1-r1/libupnp-1.4.1/upnp/inc/upnp.h	2006-07-31 07:33:05.000000000 +0200
++++ ./upnp/inc/upnp.h	2010-09-27 10:15:22.000000000 +0200
+@@ -2604,8 +2604,10 @@
+  */
+  
+ EXPORT_SPEC int UpnpSetWebServerRootDir( 
+-    IN const char* rootDir  /** Path of the root directory of the web 
++    IN const char* rootDir,  /** Path of the root directory of the web 
+                                 server. */
++    IN const char * def_file /** Name of the default file to access when trying '/'*/
++
+     );
+ 
+ /** {\bf UpnpSetVirtualDirCallbacks} sets the callback function to be used to 
+@@ -2638,7 +2640,8 @@
+  */
+ 
+ EXPORT_SPEC int UpnpEnableWebserver(
+-    IN int enable /** {\tt TRUE} to enable, {\tt FALSE} to disable. */
++    IN int enable, /** {\tt TRUE} to enable, {\tt FALSE} to disable. */
++    IN char* def_file /** default file name for web server*/
+     );
+ 
+ /** {\bf UpnpIsWebServerEnabled} returns {\tt TRUE} if the webserver is
+diff -urN ../../angstrom-dev/work/armv5te-none-linux-gnueabi/libupnp-1.4.1-r1/libupnp-1.4.1/upnp/sample/tvdevice/upnp_tv_device.c ./upnp/sample/tvdevice/upnp_tv_device.c
+--- ../../angstrom-dev/work/armv5te-none-linux-gnueabi/libupnp-1.4.1-r1/libupnp-1.4.1/upnp/sample/tvdevice/upnp_tv_device.c	2006-07-17 08:37:21.000000000 +0200
++++ ./upnp/sample/tvdevice/upnp_tv_device.c	2010-09-23 10:08:09.000000000 +0200
+@@ -1993,7 +1993,7 @@
+     SampleUtil_Print( "Specifying the webserver root directory -- %s\n",
+                       web_dir_path );
+     if( ( ret =
+-          UpnpSetWebServerRootDir( web_dir_path ) ) != UPNP_E_SUCCESS ) {
++          UpnpSetWebServerRootDir( web_dir_path, NULL ) ) != UPNP_E_SUCCESS ) {
+         SampleUtil_Print
+             ( "Error specifying webserver root directory -- %s: %d\n",
+               web_dir_path, ret );
+diff -urN ../../angstrom-dev/work/armv5te-none-linux-gnueabi/libupnp-1.4.1-r1/libupnp-1.4.1/upnp/src/api/upnpapi.c ./upnp/src/api/upnpapi.c
+--- ../../angstrom-dev/work/armv5te-none-linux-gnueabi/libupnp-1.4.1-r1/libupnp-1.4.1/upnp/src/api/upnpapi.c	2006-07-31 07:33:05.000000000 +0200
++++ ./upnp/src/api/upnpapi.c	2010-09-27 10:15:22.000000000 +0200
+@@ -291,7 +291,7 @@
+ 
+ #if EXCLUDE_WEB_SERVER == 0
+     if( ( retVal =
+-          UpnpEnableWebserver( WEB_SERVER_ENABLED ) ) != UPNP_E_SUCCESS ) {
++          UpnpEnableWebserver( WEB_SERVER_ENABLED, NULL ) ) != UPNP_E_SUCCESS ) {
+         UpnpFinish(  );
+         UpnpSdkInit = 0;
+         return retVal;
+@@ -3949,7 +3949,7 @@
+  *	UPNP_E_SUCCESS if successful else returns appropriate error
+  ***************************************************************************/
+ int
+-UpnpSetWebServerRootDir( IN const char *rootDir )
++UpnpSetWebServerRootDir( IN const char *rootDir , IN const char * def_file)
+ {
+     if( UpnpSdkInit == 0 )
+         return UPNP_E_FINISH;
+@@ -3959,7 +3959,7 @@
+ 
+     membuffer_destroy( &gDocumentRootDir );
+ 
+-    return ( web_server_set_root_dir( rootDir ) );
++    return ( web_server_set_root_dir( rootDir , def_file) );
+ }
+ #endif // INTERNAL_WEB_SERVER
+ /*
+@@ -4155,7 +4155,7 @@
+  *	UPNP_E_SUCCESS if successful else returns appropriate error
+  ***************************************************************************/
+ int
+-UpnpEnableWebserver( IN int enable )
++UpnpEnableWebserver( IN int enable , IN char* def_file)
+ {
+     int retVal;
+ 
+@@ -4166,7 +4166,7 @@
+     switch ( enable ) {
+ #ifdef INTERNAL_WEB_SERVER
+         case TRUE:
+-            if( ( retVal = web_server_init(  ) ) != UPNP_E_SUCCESS ) {
++            if( ( retVal = web_server_init( def_file ) ) != UPNP_E_SUCCESS ) {
+                 return retVal;
+             }
+             bWebServerState = WEB_SERVER_ENABLED;
+diff -urN ../../angstrom-dev/work/armv5te-none-linux-gnueabi/libupnp-1.4.1-r1/libupnp-1.4.1/upnp/src/genlib/net/http/webserver.c ./upnp/src/genlib/net/http/webserver.c
+--- ../../angstrom-dev/work/armv5te-none-linux-gnueabi/libupnp-1.4.1-r1/libupnp-1.4.1/upnp/src/genlib/net/http/webserver.c	2006-07-17 08:37:22.000000000 +0200
++++ ./upnp/src/genlib/net/http/webserver.c	2010-09-27 10:15:22.000000000 +0200
+@@ -84,6 +84,8 @@
+     "text"                      // 5
+ };
+ 
++char* default_file=NULL;
++
+ /*
+    Defines 
+  */
+@@ -524,7 +526,8 @@
+ *	UPNP_E_OUTOF_MEMORY: note: alias_content is not freed here			
+ ************************************************************************/
+ int
+-web_server_init( void )
++//web_server_init( void )
++web_server_init(const char* def_file)
+ {
+     int ret_code;
+ 
+@@ -541,6 +544,16 @@
+         }
+         bWebServerState = WEB_SERVER_ENABLED;
+     }
++    if (def_file)
++    {
++        int len;
++        len=strlen(def_file);
++        default_file=malloc(len+1);
++	memset(default_file,'\000',len+1);
++        strncpy(default_file, def_file, len);
++    }
++    else
++        default_file=NULL;
+ 
+     return 0;
+ }
+@@ -655,7 +668,7 @@
+ *	int																	
+ ************************************************************************/
+ int
+-web_server_set_root_dir( IN const char *root_dir )
++web_server_set_root_dir( IN const char *root_dir , IN const char* def_file)
+ {
+     int index;
+     int ret;
+@@ -671,6 +684,18 @@
+             membuffer_delete( &gDocumentRootDir, index, 1 );
+         }
+     }
++ if (def_file)
++    {
++        int len;
++        if (default_file)
++                free(default_file);
++        len=strlen(def_file);
++        if (len>1)
++        {
++            default_file=malloc(len+1);
++            strncpy(default_file, def_file,len);
++        }
++    }
+ 
+     return 0;
+ }
+@@ -1240,6 +1265,13 @@
+         goto error_handler;
+     }
+ 
++    if ( (!strcmp(request_doc,"/")) && (default_file) )
++    {
++        free(request_doc);
++        request_doc=malloc(strlen(default_file));
++        strcpy(request_doc,default_file);
++    }
++
+     if( isFileInVirtualDir( request_doc ) ) {
+         using_virtual_dir = TRUE;
+         RespInstr->IsVirtualFile = 1;
+diff -urN ../../angstrom-dev/work/armv5te-none-linux-gnueabi/libupnp-1.4.1-r1/libupnp-1.4.1/upnp/src/inc/webserver.h ./upnp/src/inc/webserver.h
+--- ../../angstrom-dev/work/armv5te-none-linux-gnueabi/libupnp-1.4.1-r1/libupnp-1.4.1/upnp/src/inc/webserver.h	2006-07-17 08:37:22.000000000 +0200
++++ ./upnp/src/inc/webserver.h	2010-09-23 10:08:09.000000000 +0200
+@@ -69,7 +69,8 @@
+ *	0 - OK																
+ *	UPNP_E_OUTOF_MEMORY: note: alias_content is not freed here			
+ ************************************************************************/
+-int web_server_init( void );
++//int web_server_init( void );
++int web_server_init( const char* );
+ 
+ /************************************************************************
+ * Function: web_server_destroy											
+@@ -123,7 +124,8 @@
+ * Returns:																
+ *	int																	
+ ************************************************************************/
+-int web_server_set_root_dir( IN const char* root_dir );
++int web_server_set_root_dir( IN const char* root_dir , IN const char* def_file);
++
+ 
+ /************************************************************************
+ * Function: web_server_callback											*

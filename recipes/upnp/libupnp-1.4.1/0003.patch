@@ -1,0 +1,41 @@
+From f1ff458416f7d6bbe83bf60e78c2b2a9d35eb441 Mon Sep 17 00:00:00 2001
+From: cvs <cvs>
+Date: Wed, 21 Feb 2007 13:20:14 +0000
+Subject: [PATCH 03/30] Davide: risoluzione possibile problema sul file di default del web_server.
+
+---
+ upnp/src/genlib/net/http/webserver.c |   10 ++++++----
+ 1 files changed, 6 insertions(+), 4 deletions(-)
+
+diff --git a/upnp/src/genlib/net/http/webserver.c b/upnp/src/genlib/net/http/webserver.c
+index 1cb5d9c..c394c37 100644
+--- a/upnp/src/genlib/net/http/webserver.c
++++ b/upnp/src/genlib/net/http/webserver.c
+@@ -548,9 +548,10 @@ web_server_init(const char* def_file)
+     {
+         int len;
+         len=strlen(def_file);
+-        default_file=malloc(len+1);
++       /* default_file=malloc(len+1);
+ 	memset(default_file,'\000',len+1);
+-        strncpy(default_file, def_file, len);
++        strncpy(default_file, def_file, len);*/
++	default_file = strdup(def_file);
+     }
+     else
+         default_file=NULL;
+@@ -692,8 +693,9 @@ web_server_set_root_dir( IN const char *root_dir , IN const char* def_file)
+         len=strlen(def_file);
+         if (len>1)
+         {
+-            default_file=malloc(len+1);
+-            strncpy(default_file, def_file,len);
++            /*default_file=malloc(len+1);
++            strncpy(default_file, def_file,len);*/
++	    default_file = strdup(def_file);
+         }
+     }
+ 
+-- 
+1.7.0.4
+

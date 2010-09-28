@@ -1,0 +1,132 @@
+From 3484a232aea1a79cd6fb2805bf07269e35d434c2 Mon Sep 17 00:00:00 2001
+From: cvs <cvs>
+Date: Mon, 30 Oct 2006 13:37:26 +0000
+Subject: [PATCH 01/30] Davide: eliminata dipendenza da default gateway per fare "join to multicast groups"
+
+---
+ upnp/src/ssdp/ssdp_server.c |   93 ++++++++++++++++++++++++++++++++++++++++--
+ 1 files changed, 88 insertions(+), 5 deletions(-)
+
+diff --git a/upnp/src/ssdp/ssdp_server.c b/upnp/src/ssdp/ssdp_server.c
+index f9b19cb..9c7f788 100644
+--- a/upnp/src/ssdp/ssdp_server.c
++++ b/upnp/src/ssdp/ssdp_server.c
+@@ -37,6 +37,20 @@
+ #include <stdio.h>
+ #include "ThreadPool.h"
+ #include "miniserver.h"
++/*
++#include <stdio.h>
++#include <stdlib.h>
++#include <unistd.h>
++#include <errno.h>
++#include <string.h>
++#include <ctype.h>
++#include <fcntl.h>
++#include <sys/types.h>
++#include <sys/socket.h>
++#include <netinet/in.h>
++#include <arpa/inet.h>*/
++#include <net/if.h>
++#include <sys/ioctl.h>
+ 
+ #include "upnpapi.h"
+ #include "httpparser.h"
+@@ -919,7 +933,7 @@ get_ssdp_sockets( MiniServerSockArray * out )
+          )
+     int onOff = 1;
+     u_char ttl = 4;
+-    struct ip_mreq ssdpMcastAddr;
++    struct ip_mreqn ssdpMcastAddr;
+     struct sockaddr_in ssdpAddr;
+     int option = 1;
+ 
+@@ -996,12 +1010,81 @@ get_ssdp_sockets( MiniServerSockArray * out )
+         return UPNP_E_SOCKET_BIND;
+     }
+ 
+-    memset( ( void * )&ssdpMcastAddr, 0, sizeof( struct ip_mreq ) );
+-    ssdpMcastAddr.imr_interface.s_addr = htonl( INADDR_ANY );
++    struct ifreq if_info;
++    memset(&if_info, 0, sizeof(if_info));
++    memset( ( void * )&ssdpMcastAddr, 0, sizeof( struct ip_mreqn ) );
++    
++//    strncpy(if_info.ifr_name, "eth0", IFNAMSIZ-1);
++{
++
++    char szBuffer[MAX_INTERFACES * sizeof( struct ifreq )];
++    struct ifconf ifConf;
++    struct ifreq ifReq;
++    int nResult;
++//    struct sockaddr_in LocalAddr;
++    int j = 0,i;
++
++    ifConf.ifc_len = sizeof szBuffer;
++    ifConf.ifc_ifcu.ifcu_buf = ( caddr_t ) szBuffer;
++    nResult = ioctl( ssdpSock, SIOCGIFCONF, &ifConf );
++
++    if( nResult < 0 ) {
++        DBGONLY( UpnpPrintf( UPNP_ALL, API, __FILE__, __LINE__,
++                             "DiscoverInterfaces: SIOCGIFCONF returned error\n" );
++             )
++            return UPNP_E_INIT;
++    }
++    // Cycle through the list of interfaces looking for IP addresses.
++
++    for( i = 0; ( ( i < ifConf.ifc_len ) && ( j < DEFAULT_INTERFACE ) ); ) 
++    {
++        struct ifreq *pifReq = ( struct ifreq * )( ( caddr_t ) ifConf.ifc_req + i );
++        i += sizeof *pifReq;
++
++        // See if this is the sort of interface we want to deal with.
++        strcpy( ifReq.ifr_name, pifReq->ifr_name );
++        if( ioctl( ssdpSock, SIOCGIFFLAGS, &ifReq ) < 0 ) 
++        {
++            DBGONLY( UpnpPrintf( UPNP_ALL, API, __FILE__, __LINE__,
++                                 "Can't get interface flags for %s:\n",
++                                 ifReq.ifr_name );
++                 )
++        }
++        // Skip loopback, point-to-point and down interfaces,
++        // except don't skip down interfaces
++        // if we're trying to get a list of configurable interfaces.
++      if( ( ifReq.ifr_flags & IFF_LOOPBACK ) || ( !( ifReq.ifr_flags & IFF_UP ) ) ) 
++      {
++            continue;
++      }
++        //increment j if we found an address which is not loopback
++        //and is up
++        j++;
++
++    }
++
++printf("NOME NAME AD SURNAME:%s\n",ifReq.ifr_name);
++strncpy(if_info.ifr_name, ifReq.ifr_name, IFNAMSIZ-1);
++}
++    if (ioctl(ssdpSock, SIOCGIFINDEX, &if_info) == -1) {
++	printf("\nSIOCGIFINDEX ERROR\n");
++		DBGONLY(UpnpPrintf( UPNP_CRITICAL, SSDP, __FILE__, __LINE__,"Error retrieving socket index !!!\n");)
++		close(ssdpSock);
++		return -1;
++	}
++    ssdpMcastAddr.imr_ifindex = if_info.ifr_ifindex;
++    printf("\nprima di tutto SIOCGIFINDEX andata a buon fine. Secondo if_info.ifr_ifindex=%d\n",if_info.ifr_ifindex);
++    ssdpMcastAddr.imr_address.s_addr = htonl( INADDR_ANY );
+     ssdpMcastAddr.imr_multiaddr.s_addr = inet_addr( SSDP_IP );
+-    if( setsockopt( ssdpSock, IPPROTO_IP, IP_ADD_MEMBERSHIP,
++
++/*    ssdpMcastAddr.imr_interface.s_addr = htonl( INADDR_ANY );
++    ssdpMcastAddr.imr_multiaddr.s_addr = inet_addr( SSDP_IP );*/
++
++    int pippo;
++    if( pippo=setsockopt( ssdpSock, IPPROTO_IP, IP_ADD_MEMBERSHIP,
+                     ( char * )&ssdpMcastAddr,
+-                    sizeof( struct ip_mreq ) ) != 0 ) {
++                    sizeof( struct ip_mreqn ) ) != 0 ) {
++        printf("\n\n CICCIOBELLO SPUTACI SOTTO \n %d\n\n",pippo);
+         DBGONLY( UpnpPrintf
+                  ( UPNP_CRITICAL, SSDP, __FILE__, __LINE__,
+                    "Error in joining" " multicast group !!!\n" );
+-- 
+1.7.0.4
+

@@ -1,0 +1,1744 @@
+From 9263eb4956ae2cbf77738bfe62994770a2b77331 Mon Sep 17 00:00:00 2001
+From: cvs <cvs>
+Date: Wed, 17 Oct 2007 08:59:18 +0000
+Subject: [PATCH 05/30] Agresta:
+  # aggiornamento ultima versione ixml (libupnp.1.6.0)
+
+---
+ ixml/Makefile.am          |    2 +-
+ ixml/Makefile.in          |   18 ++--
+ ixml/doc/Makefile.am      |    2 +-
+ ixml/doc/Makefile.in      |   18 ++--
+ ixml/inc/ixml.h           |  247 +++++++++++++++++++++++----------------------
+ ixml/src/document.c       |   32 +++---
+ ixml/src/element.c        |   46 ++++----
+ ixml/src/inc/ixmlmembuf.h |    2 +-
+ ixml/src/inc/ixmlparser.h |   14 ++--
+ ixml/src/ixml.c           |   55 +++++-----
+ ixml/src/ixmlparser.c     |   91 ++++++++++-------
+ ixml/src/namedNodeMap.c   |    4 +-
+ ixml/src/node.c           |   30 +++---
+ 13 files changed, 294 insertions(+), 267 deletions(-)
+
+diff --git a/ixml/inc/ixml.h b/ixml/inc/ixml.h
+index b0a6b81..c7a549e 100644
+--- a/ixml/inc/ixml.h
++++ b/ixml/inc/ixml.h
+@@ -1,59 +1,61 @@
+-///////////////////////////////////////////////////////////////////////////
+-//
+-// Copyright (c) 2000-2003 Intel Corporation 
+-// All rights reserved. 
+-//
+-// Redistribution and use in source and binary forms, with or without 
+-// modification, are permitted provided that the following conditions are met: 
+-//
+-// * Redistributions of source code must retain the above copyright notice, 
+-// this list of conditions and the following disclaimer. 
+-// * Redistributions in binary form must reproduce the above copyright notice, 
+-// this list of conditions and the following disclaimer in the documentation 
+-// and/or other materials provided with the distribution. 
+-// * Neither name of Intel Corporation nor the names of its contributors 
+-// may be used to endorse or promote products derived from this software 
+-// without specific prior written permission.
+-// 
+-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS 
+-// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT 
+-// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR 
+-// A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL INTEL OR 
+-// CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, 
+-// EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, 
+-// PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR 
+-// PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY 
+-// OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+-// NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS 
+-// SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+-//
+-///////////////////////////////////////////////////////////////////////////
++/*******************************************************************************
++ *
++ * Copyright (c) 2000-2003 Intel Corporation 
++ * All rights reserved. 
++ *
++ * Redistribution and use in source and binary forms, with or without 
++ * modification, are permitted provided that the following conditions are met: 
++ *
++ * * Redistributions of source code must retain the above copyright notice, 
++ * this list of conditions and the following disclaimer. 
++ * * Redistributions in binary form must reproduce the above copyright notice, 
++ * this list of conditions and the following disclaimer in the documentation 
++ * and/or other materials provided with the distribution. 
++ * * Neither name of Intel Corporation nor the names of its contributors 
++ * may be used to endorse or promote products derived from this software 
++ * without specific prior written permission.
++ * 
++ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS 
++ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT 
++ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR 
++ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL INTEL OR 
++ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, 
++ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, 
++ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR 
++ * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY 
++ * OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
++ * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS 
++ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
++ *
++ ******************************************************************************/
+ 
+ #ifndef _IXML_H_
+ #define _IXML_H_
+ 
++
+ #include <stdio.h>
+ #include <string.h>
+-//#include <malloc.h>
+ #include <assert.h>
+ 
++
+ #ifdef WIN32
+- #ifndef UPNP_STATIC_LIB
+-  #ifdef LIBUPNP_EXPORTS
+-  // set up declspec for dll export to make functions visible to library users
+-   #define EXPORT_SPEC __declspec(dllexport)
+-  #else
+-   #define EXPORT_SPEC __declspec(dllimport)
+-  #endif
+- #else
+-  #define EXPORT_SPEC
+- #endif
++	#ifndef UPNP_STATIC_LIB
++		#ifdef LIBUPNP_EXPORTS
++			/* set up declspec for dll export to make functions visible to library users */
++			#define EXPORT_SPEC __declspec(dllexport)
++		#else
++			#define EXPORT_SPEC __declspec(dllimport)
++		#endif
++	#else
++		#define EXPORT_SPEC
++	#endif
+ #else
+- #define EXPORT_SPEC
++	#define EXPORT_SPEC
+ #endif
+ 
+ typedef int BOOL;
+ 
++
+ #define DOMString   char *
+ 
+ 
+@@ -88,7 +90,7 @@ typedef int BOOL;
+  * etc., refer to section 1.1 of the DOM2-Core recommendation.
+  */
+ 
+-//@{
++/*! @{ */
+ 
+ /*================================================================
+ *
+@@ -121,7 +123,7 @@ typedef enum
+ *
+ *=================================================================*/
+ typedef enum 
+-{   // see DOM spec
++{   /* see DOM spec */
+     IXML_INDEX_SIZE_ERR                 = 1,
+     IXML_DOMSTRING_SIZE_ERR             = 2,
+     IXML_HIERARCHY_REQUEST_ERR          = 3,
+@@ -240,7 +242,7 @@ extern "C" {
+  * its functionality.  For more information, refer to DOM2-Core page 34.
+  */
+ 
+-//@{
++/*! @{ */
+ 
+   /** Returns the name of the {\bf Node}, depending on what type of 
+    *  {\bf Node} it is, in a read-only string. Refer to the table in the 
+@@ -260,7 +262,7 @@ ixmlNode_getNodeName(IXML_Node *nodeptr
+    *  @return [DOMString] A {\bf DOMString} of the {\bf Node} value.
+    */
+ 
+-EXPORT_SPEC DOMString               
++EXPORT_SPEC const DOMString               
+ ixmlNode_getNodeValue(IXML_Node *nodeptr  
+ 		        /** Pointer to the {\bf Node} to retrieve the value. */
+                      );
+@@ -282,7 +284,7 @@ ixmlNode_getNodeValue(IXML_Node *nodeptr
+ EXPORT_SPEC int                     
+ ixmlNode_setNodeValue(IXML_Node *nodeptr, 
+ 		        /** The {\bf Node} to which to assign a new value. */
+-                      char *newNodeValue  
++                      const char *newNodeValue  
+ 		        /** The new value of the {\bf Node}. */
+                   );
+ 
+@@ -439,7 +441,7 @@ ixmlNode_getNamespaceURI(IXML_Node *nodeptr
+    *                      or {\tt NULL}.
+    */
+ 
+-EXPORT_SPEC DOMString               
++EXPORT_SPEC const DOMString               
+ ixmlNode_getPrefix(IXML_Node *nodeptr  
+ 		     /** The {\bf Node} from which to retrieve the prefix. */
+                );
+@@ -620,7 +622,7 @@ ixmlNode_cloneNode(IXML_Node *nodeptr,
+    */
+ 
+ EXPORT_SPEC BOOL    
+-ixmlNode_hasAttributes(IXML_Node *node  
++ixmlNode_hasAttributes(IXML_Node *nodeptr
+ 		         /** The {\bf Node} to query for attributes. */
+                       );
+ 
+@@ -630,11 +632,11 @@ ixmlNode_hasAttributes(IXML_Node *node
+    */
+ 
+ EXPORT_SPEC void    
+-ixmlNode_free(IXML_Node *IXML_Node  
++ixmlNode_free(IXML_Node *nodeptr
+ 		/** The {\bf Node} to free. */
+              );
+ 
+-//@}
++/*! @} */
+ 
+ /*================================================================
+ *
+@@ -649,7 +651,7 @@ ixmlNode_free(IXML_Node *IXML_Node
+  * allowable attributes and values for a particular element.  For more 
+  * information, refer to the {\it Interface Attr} section in the DOM2-Core.
+  */
+-//@{
++/*! @{ */
+ 
+ 
+   /** Frees an {\bf Attr} node.
+@@ -662,7 +664,7 @@ ixmlAttr_free(IXML_Attr *attrNode
+ 		/** The {\bf Attr} node to free.  */
+              );
+ 
+-//@}
++/*! @} */
+ 
+ 
+ /*================================================================
+@@ -680,7 +682,7 @@ ixmlAttr_free(IXML_Attr *attrNode
+  * information, refer to the {\it Interface CDATASection} section in the
+  * DOM2-Core.
+  */
+-//@{
++/*! @{ */
+ 
+ 
+   /** Initializes a {\bf CDATASection} node.
+@@ -704,7 +706,7 @@ ixmlCDATASection_free(IXML_CDATASection *nodeptr
+ 		        /** The {\bf CDATASection} node to free. */
+                      );
+ 
+-//@}
++/*! @} */
+ 
+ /*================================================================
+ *
+@@ -719,7 +721,7 @@ ixmlCDATASection_free(IXML_CDATASection *nodeptr
+  * primary interface to the elements of the document.  For more information,
+  * refer to the {\it Interface Document} section in the DOM2Core.
+  */
+-//@{
++/*! @{ */
+ 
+   /** Initializes a {\bf Document} node.
+    *
+@@ -867,7 +869,7 @@ EXPORT_SPEC int
+ ixmlDocument_createCDATASectionEx(IXML_Document *doc,  
+ 		                    /** The owner {\bf Document} of the new 
+ 				        node. */
+-                                  DOMString data,      
++                                  const DOMString data,      
+ 				    /** The data to associate with the new 
+ 				        {\bf CDATASection} node. */
+                                   IXML_CDATASection** cdNode   
+@@ -886,7 +888,7 @@ EXPORT_SPEC IXML_CDATASection*
+ ixmlDocument_createCDATASection(IXML_Document *doc,  
+ 				  /** The owner {\bf Document} of the new 
+ 				      node. */
+-                                DOMString data  
++                                const DOMString data  
+ 				  /** The data to associate with the new {\bf 
+ 				      CDATASection} node. */
+                                );
+@@ -899,7 +901,7 @@ ixmlDocument_createCDATASection(IXML_Document *doc,
+ EXPORT_SPEC IXML_Attr*
+ ixmlDocument_createAttribute(IXML_Document *doc,  
+ 		               /** The owner {\bf Document} of the new node. */
+-                             char *name      
++                             const char *name      
+ 			       /** The name of the new attribute. */
+                             );
+ 
+@@ -924,7 +926,7 @@ EXPORT_SPEC int
+ ixmlDocument_createAttributeEx(IXML_Document *doc,  
+ 		                 /** The owner {\bf Document} of the new 
+ 				     node. */
+-                               char *name,      
++                               const char *name,      
+ 			         /** The name of the new attribute. */
+                                IXML_Attr** attrNode
+ 			         /** A pointer to a {\bf Attr} where the new 
+@@ -943,11 +945,11 @@ ixmlDocument_createAttributeEx(IXML_Document *doc,
+ EXPORT_SPEC IXML_NodeList*
+ ixmlDocument_getElementsByTagName(IXML_Document *doc,     
+ 		                    /** The {\bf Document} to search. */
+-                                  DOMString tagName  
++                                  const DOMString tagName  
+ 				    /** The tag name to find. */
+                                  );
+ 
+-// introduced in DOM level 2
++/* introduced in DOM level 2 */
+ 
+   /** Creates a new {\bf Element} node in the given qualified name and
+    *  namespace URI.
+@@ -970,10 +972,10 @@ EXPORT_SPEC int
+ ixmlDocument_createElementNSEx(IXML_Document *doc,           
+ 		                 /** The owner {\bf Document} of the new 
+ 				     node. */
+-                               DOMString namespaceURI,  
++                               const DOMString namespaceURI,  
+ 			         /** The namespace URI for the new {\bf 
+ 				     Element}. */
+-                               DOMString qualifiedName,  
++                               const DOMString qualifiedName,  
+ 			         /** The qualified name of the new {\bf 
+ 				     Element}. */
+                                IXML_Element** rtElement
+@@ -992,10 +994,10 @@ ixmlDocument_createElementNSEx(IXML_Document *doc,
+ EXPORT_SPEC IXML_Element*
+ ixmlDocument_createElementNS(IXML_Document *doc,           
+ 		               /** The owner {\bf Document} of the new node. */
+-                             DOMString namespaceURI,  
++                             const DOMString namespaceURI,  
+ 			       /** The namespace URI for the new {\bf 
+ 				   Element}. */
+-                             DOMString qualifiedName  
++                             const DOMString qualifiedName  
+ 			       /** The qualified name of the new {\bf 
+ 				   Element}. */
+                              );
+@@ -1021,9 +1023,9 @@ EXPORT_SPEC int
+ ixmlDocument_createAttributeNSEx(IXML_Document *doc,
+ 		                   /** The owner {\bf Document} of the new 
+ 				       {\bf Attr}. */
+-                                 DOMString namespaceURI, 
++                                 const DOMString namespaceURI, 
+ 				   /** The namespace URI for the attribute. */
+-                                 DOMString qualifiedName, 
++                                 const DOMString qualifiedName, 
+ 				   /** The qualified name of the attribute. */
+                                  IXML_Attr** attrNode
+ 				   /** A pointer to an {\bf Attr} where the 
+@@ -1040,9 +1042,9 @@ EXPORT_SPEC IXML_Attr*
+ ixmlDocument_createAttributeNS(IXML_Document *doc, 
+ 		                 /** The owner {\bf Document} of the new 
+ 				     {\bf Attr}. */
+-                               DOMString namespaceURI, 
++                               const DOMString namespaceURI, 
+ 			         /** The namespace URI for the attribute. */
+-                               DOMString qualifiedName 
++                               const DOMString qualifiedName 
+ 			         /** The qualified name of the attribute. */
+                               );   
+ 
+@@ -1059,11 +1061,11 @@ ixmlDocument_createAttributeNS(IXML_Document *doc,
+ EXPORT_SPEC IXML_NodeList*   
+ ixmlDocument_getElementsByTagNameNS(IXML_Document* doc,          
+ 		                      /** The {\bf Document} to search. */
+-                                    DOMString namespaceURI, 
++                                    const DOMString namespaceURI, 
+ 				      /** The namespace of the elements to 
+                                           find or {\tt "*"} to match any 
+                                           namespace. */
+-                                    DOMString localName     
++                                    const DOMString localName     
+ 				      /** The local name of the elements to 
+                                           find or {\tt "*"} to match any local 
+                                           name.  */
+@@ -1079,7 +1081,7 @@ EXPORT_SPEC IXML_Element*
+ ixmlDocument_getElementById(IXML_Document* doc,         
+ 		              /** The owner {\bf Document} of the {\bf 
+ 			          Element}. */
+-                            DOMString tagName  
++                            const DOMString tagName  
+ 			      /** The name of the {\bf Element}.*/
+                             );
+ 
+@@ -1128,7 +1130,7 @@ ixmlDocument_importNode(IXML_Document* doc,
+ 			  /** A pointer to a new {\bf Node} owned by {\bf 
+ 			      doc}. */
+                        );
+-//@}
++/*! @} */
+ 
+ /*================================================================
+ *
+@@ -1144,7 +1146,7 @@ ixmlDocument_importNode(IXML_Document* doc,
+  * extends the {\bf Node} interface and adds more operations to manipulate
+  * attributes.
+  */
+-//@{
++/*! @{ */
+ 
+   /** Initializes a {\bf IXML_Element} node.
+    *
+@@ -1174,11 +1176,11 @@ ixmlElement_getTagName(IXML_Element* element
+    *                      attribute.
+    */
+ 
+-EXPORT_SPEC DOMString   
++EXPORT_SPEC const DOMString   
+ ixmlElement_getAttribute(IXML_Element* element,  
+ 		           /** The {\bf Element} from which to retrieve the 
+ 			       attribute. */
+-                         DOMString name     
++                         const DOMString name     
+ 			   /** The name of the attribute to retrieve. */
+                         );
+ 
+@@ -1202,9 +1204,9 @@ EXPORT_SPEC int
+ ixmlElement_setAttribute(IXML_Element* element,  
+ 		           /** The {\bf Element} on which to set the 
+ 			       attribute. */
+-                         DOMString name,    
++                         const DOMString name,    
+ 			   /** The name of the attribute. */
+-                         DOMString value    
++                         const DOMString value
+ 			   /** The value of the attribute.  Note that this is 
+ 			       a non-parsed string and any markup must be 
+ 			       escaped. */
+@@ -1224,7 +1226,7 @@ EXPORT_SPEC int
+ ixmlElement_removeAttribute(IXML_Element* element,  
+ 		              /** The {\bf Element} from which to remove the 
+ 			          attribute. */
+-                            DOMString name     
++                            const DOMString name     
+ 			      /** The name of the attribute to remove.  */
+                            );              
+ 
+@@ -1240,7 +1242,7 @@ EXPORT_SPEC IXML_Attr*
+ ixmlElement_getAttributeNode(IXML_Element* element,  
+ 		               /** The {\bf Element} from which to get the 
+ 				   attribute node.  */
+-                             DOMString name     
++                             const DOMString name     
+ 			       /** The name of the attribute node to find. */
+                             );
+ 
+@@ -1309,12 +1311,12 @@ EXPORT_SPEC IXML_NodeList*
+ ixmlElement_getElementsByTagName(IXML_Element* element,  
+ 		                   /** The {\bf Element} from which to start 
+ 				       the search. */
+-                                 DOMString tagName  
++                                 const DOMString tagName
+ 				   /** The name of the tag for which to 
+ 				       search. */
+                                 );
+ 
+-// introduced in DOM 2
++/* introduced in DOM 2 */
+ 
+   /** Retrieves an attribute value using the local name and namespace URI.
+    *
+@@ -1322,13 +1324,13 @@ ixmlElement_getElementsByTagName(IXML_Element* element,
+    *                      matching attribute.
+    */
+ 
+-EXPORT_SPEC DOMString   
++EXPORT_SPEC const DOMString
+ ixmlElement_getAttributeNS(IXML_Element* element,       
+ 		             /** The {\bf Element} from which to get the 
+ 			         attribute value. */
+-                           DOMString namespaceURI, 
++                           const DOMString namespaceURI, 
+ 			     /** The namespace URI of the attribute. */
+-                           DOMString localname     
++                           const DOMString localname     
+ 			     /** The local name of the attribute. */
+                           );
+ 
+@@ -1358,11 +1360,11 @@ EXPORT_SPEC int
+ ixmlElement_setAttributeNS(IXML_Element* element,         
+ 		             /** The {\bf Element} on which to set the 
+ 			         attribute. */
+-                           DOMString namespaceURI,   
++                           const DOMString namespaceURI,   
+ 		             /** The namespace URI of the new attribute. */
+-                           DOMString qualifiedName,  
++                           const DOMString qualifiedName,  
+ 			     /** The qualified name of the attribute. */
+-                           DOMString value 
++                           const DOMString value 
+ 			     /** The new value for the attribute. */
+                           );
+ 
+@@ -1380,9 +1382,9 @@ EXPORT_SPEC int
+ ixmlElement_removeAttributeNS(IXML_Element* element,        
+ 		                /** The {\bf Element} from which to remove the 
+ 				    the attribute. */
+-                              DOMString namespaceURI,  
++                              const DOMString namespaceURI,  
+ 			        /** The namespace URI of the attribute. */
+-                              DOMString localName      
++                              const DOMString localName      
+ 			        /** The local name of the attribute.*/
+                              );
+ 
+@@ -1395,9 +1397,9 @@ EXPORT_SPEC IXML_Attr*
+ ixmlElement_getAttributeNodeNS(IXML_Element* element,        
+ 		                 /** The {\bf Element} from which to get the 
+ 				     attribute. */
+-                               DOMString namespaceURI,  
++                               const DOMString namespaceURI,  
+ 			         /** The namespace URI of the attribute. */
+-                               DOMString localName      
++                               const DOMString localName      
+ 			         /** The local name of the attribute. */
+                               );
+ 
+@@ -1441,10 +1443,10 @@ EXPORT_SPEC IXML_NodeList*
+ ixmlElement_getElementsByTagNameNS(IXML_Element* element,        
+ 		                     /** The {\bf Element} from which to start 
+ 				         the search. */
+-                                   DOMString namespaceURI,  
++                                   const DOMString namespaceURI,
+ 				     /** The namespace URI of the {\bf 
+ 				         Element}s to find. */
+-                                   DOMString localName      
++                                   const DOMString localName      
+ 				     /** The local name of the {\bf Element}s 
+ 				         to find. */
+                                   );
+@@ -1461,7 +1463,7 @@ EXPORT_SPEC BOOL
+ ixmlElement_hasAttribute(IXML_Element* element, 
+ 		           /** The {\bf Element} on which to check for an 
+ 			       attribute. */
+-                         DOMString name    
++                         const DOMString name    
+ 			   /** The name of the attribute for which to check. */
+                         );
+ 
+@@ -1477,9 +1479,9 @@ EXPORT_SPEC BOOL
+ ixmlElement_hasAttributeNS(IXML_Element* element,       
+ 		             /** The {\bf Element} on which to check for the 
+ 			         attribute. */
+-                           DOMString namespaceURI, 
++                           const DOMString namespaceURI, 
+ 			     /** The namespace URI of the attribute. */
+-                           DOMString localName     
++                           const DOMString localName     
+ 			     /** The local name of the attribute. */
+                           );
+ 
+@@ -1493,7 +1495,7 @@ ixmlElement_free(IXML_Element* element
+ 		   /** The {\bf Element} to free. */
+                 );
+ 
+-//@}
++/*! @} */
+ 
+ /*================================================================
+ *
+@@ -1508,7 +1510,7 @@ ixmlElement_free(IXML_Element* element
+  * no particular order.  The {\bf Node} interface uses a {\bf NamedNodeMap}
+  * to maintain the attributes of a node.
+  */
+-//@{
++/*! @{ */
+ 
+   /** Returns the number of items contained in this {\bf NamedNodeMap}.
+    *
+@@ -1529,7 +1531,7 @@ ixmlNamedNodeMap_getLength(IXML_NamedNodeMap *nnMap
+ EXPORT_SPEC IXML_Node*   
+ ixmlNamedNodeMap_getNamedItem(IXML_NamedNodeMap *nnMap, 
+ 		                /** The {\bf NamedNodeMap} to search. */
+-                              DOMString name       
++                              const DOMString name       
+ 			        /** The name of the {\bf Node} to find. */
+                              );
+ 
+@@ -1560,7 +1562,7 @@ EXPORT_SPEC IXML_Node*
+ ixmlNamedNodeMap_removeNamedItem(IXML_NamedNodeMap *nnMap,  
+ 		                   /** The {\bf NamedNodeMap} from which to 
+ 				       remove the item. */
+-                                 DOMString name        
++                                 const DOMString name        
+ 				   /** The name of the item to remove. */
+                                 );
+ 
+@@ -1579,7 +1581,7 @@ ixmlNamedNodeMap_item(IXML_NamedNodeMap *nnMap,
+ 		        /** The index into the map to remove. */
+                      );
+ 
+-// introduced in DOM level 2
++/* introduced in DOM level 2 */
+ 
+   /** Retrieves a {\bf Node} from a {\bf NamedNodeMap} specified by
+    *  namespace URI and local name.
+@@ -1592,10 +1594,10 @@ EXPORT_SPEC IXML_Node*
+ ixmlNamedNodeMap_getNamedItemNS(IXML_NamedNodeMap *nnMap,    
+ 		                  /** The {\bf NamedNodeMap} from which to 
+ 				      remove the {\bf Node}. */
+-                                DOMString *namespaceURI,
++                                const DOMString *namespaceURI,
+ 				  /** The namespace URI of the {\bf Node} to 
+                                       remove. */
+-                                DOMString localName     
++                                const DOMString localName     
+ 				  /** The local name of the {\bf Node} to 
+ 				      remove. */
+                                );
+@@ -1627,10 +1629,10 @@ EXPORT_SPEC IXML_Node*
+ ixmlNamedNodeMap_removeNamedItemNS(IXML_NamedNodeMap *nnMap,    
+ 		                     /** The {\bf NamedNodeMap} from which to 
+ 				         remove the {\bf Node}. */
+-                                   DOMString namespaceURI, 
++                                   const DOMString namespaceURI, 
+ 				     /** The namespace URI of the {\bf Node} 
+ 				         to remove. */
+-                                   DOMString localName     
++                                   const DOMString localName     
+ 				     /** The local name of the {\bf Node} to 
+ 				         remove. */
+                                   );
+@@ -1646,7 +1648,7 @@ ixmlNamedNodeMap_free(IXML_NamedNodeMap *nnMap
+ 		        /** The {\bf NamedNodeMap to free}. */
+                      );
+ 
+-//@}
++/*! @} */
+ 
+ /*================================================================
+ *
+@@ -1661,7 +1663,7 @@ ixmlNamedNodeMap_free(IXML_NamedNodeMap *nnMap
+  * the nodes contained in a {\bf NodeList}.  The DOM2-Core refers to
+  * this as being {\it live}.
+  */
+-//@{
++/*! @{ */
+ 
+   /** Retrieves a {\bf Node} from a {\bf NodeList} specified by a 
+    *  numerical index.
+@@ -1701,8 +1703,8 @@ ixmlNodeList_free(IXML_NodeList *nList
+ 		    /** The {\bf NodeList} to free.  */
+                  );
+ 
+-//@} Interface NodeList
+-//@} DOM Interfaces
++/*! @} */ /* Interface NodeList */
++/*! @} */ /* DOM Interfaces */
+ 
+ /**@name IXML API
+  * The IXML API contains utility functions that are not part of the standard
+@@ -1710,7 +1712,7 @@ ixmlNodeList_free(IXML_NodeList *nList
+  * file or buffer, create an XML file from a DOM structure, and manipulate 
+  * DOMString objects.
+  */
+-//@{
++/*! @{ */
+ 
+ /*================================================================
+ * 
+@@ -1738,7 +1740,7 @@ ixmlNodeList_free(IXML_NodeList *nList
+    *                      of the DOM tree or {\tt NULL} on an error.
+    */
+ 
+-DOMString
++EXPORT_SPEC DOMString
+ ixmlPrintDocument(IXML_Document *doc);
+ 
+   /** Renders a {\bf Node} and all sub-elements into an XML text
+@@ -1756,7 +1758,7 @@ ixmlPrintDocument(IXML_Document *doc);
+    *                      of the DOM tree or {\tt NULL} on an error.
+    */
+ 
+-DOMString   
++EXPORT_SPEC DOMString   
+ ixmlPrintNode(IXML_Node *doc  
+                 /** The root of the {\bf Node} tree to render to XML text. */
+              );
+@@ -1777,7 +1779,7 @@ ixmlPrintNode(IXML_Node *doc
+    *                      of the DOM tree or {\tt NULL} on an error.
+    */
+ 
+-DOMString
++EXPORT_SPEC DOMString
+ ixmlDocumenttoString(IXML_Document *doc);
+ 
+   /** Renders a {\bf Node} and all sub-elements into an XML text
+@@ -1809,7 +1811,7 @@ ixmlNodetoString(IXML_Node *doc
+    * characters are replaced by the {\bf errorChar}, and invalid "&" entities 
+    * are left untranslated. The parsing is then allowed to continue.
+    */
+-void
++EXPORT_SPEC void
+ ixmlRelaxParser(char errorChar);
+ 
+ 
+@@ -1819,7 +1821,7 @@ ixmlRelaxParser(char errorChar);
+    *                      {\tt NULL} on an error. 
+    */
+ EXPORT_SPEC IXML_Document*
+-ixmlParseBuffer(char *buffer 
++ixmlParseBuffer(const char *buffer 
+ 		  /** The buffer that contains the XML text to convert to a 
+ 		      {\bf Document}. */
+                );
+@@ -1842,7 +1844,7 @@ ixmlParseBuffer(char *buffer
+    */
+ 
+ EXPORT_SPEC int
+-ixmlParseBufferEx(char *buffer, 
++ixmlParseBufferEx(const char *buffer, 
+ 		    /** The buffer that contains the XML text to convert to a 
+ 		        {\bf Document}. */
+                   IXML_Document** doc 
+@@ -1857,7 +1859,7 @@ ixmlParseBufferEx(char *buffer,
+    */
+ 
+ EXPORT_SPEC IXML_Document*
+-ixmlLoadDocument(char* xmlFile      
++ixmlLoadDocument(const char* xmlFile      
+ 		   /** The filename of the XML text to convert to a {\bf 
+ 		       Document}. */
+                 );
+@@ -1879,7 +1881,7 @@ ixmlLoadDocument(char* xmlFile
+    */
+ 
+ EXPORT_SPEC int 
+-ixmlLoadDocumentEx(char* xmlFile,      
++ixmlLoadDocumentEx(const char* xmlFile,      
+ 		     /** The filename of the XML text to convert to a {\bf 
+ 		         Document}. */
+                    IXML_Document** doc   
+@@ -1913,6 +1915,7 @@ ixmlFreeDOMString(DOMString buf
+ }
+ #endif
+ 
+-//@} IXML API
++/*! @} */ /* IXML API */
++
++#endif  /* _IXML_H_ */
+ 
+-#endif  // _IXML_H_
+diff --git a/ixml/src/document.c b/ixml/src/document.c
+index a0b8ef5..8b03ea2 100644
+--- a/ixml/src/document.c
++++ b/ixml/src/document.c
+@@ -373,7 +373,7 @@ ixmlDocument_createTextNode( IN IXML_Document * doc,
+ ================================================================*/
+ int
+ ixmlDocument_createAttributeEx( IN IXML_Document * doc,
+-                                IN char *name,
++                                IN const char *name,
+                                 OUT IXML_Attr ** rtAttr )
+ {
+     IXML_Attr *attrNode = NULL;
+@@ -427,7 +427,7 @@ ixmlDocument_createAttributeEx( IN IXML_Document * doc,
+ ================================================================*/
+ IXML_Attr *
+ ixmlDocument_createAttribute( IN IXML_Document * doc,
+-                              IN char *name )
++                              IN const char *name )
+ {
+     IXML_Attr *attrNode = NULL;
+ 
+@@ -451,8 +451,8 @@ ixmlDocument_createAttribute( IN IXML_Document * doc,
+ *=================================================================*/
+ int
+ ixmlDocument_createAttributeNSEx( IN IXML_Document * doc,
+-                                  IN DOMString namespaceURI,
+-                                  IN DOMString qualifiedName,
++                                  IN const DOMString namespaceURI,
++                                  IN const DOMString qualifiedName,
+                                   OUT IXML_Attr ** rtAttr )
+ {
+     IXML_Attr *attrNode = NULL;
+@@ -507,8 +507,8 @@ ixmlDocument_createAttributeNSEx( IN IXML_Document * doc,
+ *=================================================================*/
+ IXML_Attr *
+ ixmlDocument_createAttributeNS( IN IXML_Document * doc,
+-                                IN DOMString namespaceURI,
+-                                IN DOMString qualifiedName )
++                                IN const DOMString namespaceURI,
++                                IN const DOMString qualifiedName )
+ {
+     IXML_Attr *attrNode = NULL;
+ 
+@@ -531,7 +531,7 @@ ixmlDocument_createAttributeNS( IN IXML_Document * doc,
+ *=================================================================*/
+ int
+ ixmlDocument_createCDATASectionEx( IN IXML_Document * doc,
+-                                   IN DOMString data,
++                                   IN const DOMString data,
+                                    OUT IXML_CDATASection ** rtCD )
+ {
+     int errCode = IXML_SUCCESS;
+@@ -588,7 +588,7 @@ ixmlDocument_createCDATASectionEx( IN IXML_Document * doc,
+ *=================================================================*/
+ IXML_CDATASection *
+ ixmlDocument_createCDATASection( IN IXML_Document * doc,
+-                                 IN DOMString data )
++                                 IN const DOMString data )
+ {
+ 
+     IXML_CDATASection *cDSectionNode = NULL;
+@@ -613,8 +613,8 @@ ixmlDocument_createCDATASection( IN IXML_Document * doc,
+ *=================================================================*/
+ int
+ ixmlDocument_createElementNSEx( IN IXML_Document * doc,
+-                                IN DOMString namespaceURI,
+-                                IN DOMString qualifiedName,
++                                IN const DOMString namespaceURI,
++                                IN const DOMString qualifiedName,
+                                 OUT IXML_Element ** rtElement )
+ {
+ 
+@@ -673,8 +673,8 @@ ixmlDocument_createElementNSEx( IN IXML_Document * doc,
+ *=================================================================*/
+ IXML_Element *
+ ixmlDocument_createElementNS( IN IXML_Document * doc,
+-                              IN DOMString namespaceURI,
+-                              IN DOMString qualifiedName )
++                              IN const DOMString namespaceURI,
++                              IN const DOMString qualifiedName )
+ {
+     IXML_Element *newElement = NULL;
+ 
+@@ -698,7 +698,7 @@ ixmlDocument_createElementNS( IN IXML_Document * doc,
+ *=================================================================*/
+ IXML_NodeList *
+ ixmlDocument_getElementsByTagName( IN IXML_Document * doc,
+-                                   IN char *tagName )
++                                   IN const char *tagName )
+ {
+     IXML_NodeList *returnNodeList = NULL;
+ 
+@@ -728,8 +728,8 @@ ixmlDocument_getElementsByTagName( IN IXML_Document * doc,
+ *=================================================================*/
+ IXML_NodeList *
+ ixmlDocument_getElementsByTagNameNS( IN IXML_Document * doc,
+-                                     IN DOMString namespaceURI,
+-                                     IN DOMString localName )
++                                     IN const DOMString namespaceURI,
++                                     IN const DOMString localName )
+ {
+     IXML_NodeList *returnNodeList = NULL;
+ 
+@@ -756,7 +756,7 @@ ixmlDocument_getElementsByTagNameNS( IN IXML_Document * doc,
+ *=================================================================*/
+ IXML_Element *
+ ixmlDocument_getElementById( IN IXML_Document * doc,
+-                             IN DOMString tagName )
++                             IN const DOMString tagName )
+ {
+     IXML_Element *rtElement = NULL;
+     IXML_Node *nodeptr = ( IXML_Node * ) doc;
+diff --git a/ixml/src/element.c b/ixml/src/element.c
+index 0f57c4e..524d9b6 100644
+--- a/ixml/src/element.c
++++ b/ixml/src/element.c
+@@ -71,7 +71,7 @@ ixmlElement_getTagName( IN IXML_Element * element )
+ *=================================================================*/
+ int
+ ixmlElement_setTagName( IN IXML_Element * element,
+-                        IN char *tagName )
++                        IN const char *tagName )
+ {
+     int rc = IXML_SUCCESS;
+ 
+@@ -104,9 +104,9 @@ ixmlElement_setTagName( IN IXML_Element * element,
+ *       does not have a specified value.
+ *
+ *=================================================================*/
+-DOMString
++const DOMString
+ ixmlElement_getAttribute( IN IXML_Element * element,
+-                          IN DOMString name )
++                          IN const DOMString name )
+ {
+     IXML_Node *attrNode;
+ 
+@@ -142,8 +142,8 @@ ixmlElement_getAttribute( IN IXML_Element * element,
+ *=================================================================*/
+ int
+ ixmlElement_setAttribute( IN IXML_Element * element,
+-                          IN char *name,
+-                          IN char *value )
++                          IN const char *name,
++                          IN const char *value )
+ {
+     IXML_Node *attrNode;
+     IXML_Attr *newAttrNode;
+@@ -221,7 +221,7 @@ ixmlElement_setAttribute( IN IXML_Element * element,
+ *=================================================================*/
+ int
+ ixmlElement_removeAttribute( IN IXML_Element * element,
+-                             IN char *name )
++                             IN const char *name )
+ {
+ 
+     IXML_Node *attrNode;
+@@ -262,7 +262,7 @@ ixmlElement_removeAttribute( IN IXML_Element * element,
+ *=================================================================*/
+ IXML_Attr *
+ ixmlElement_getAttributeNode( IN IXML_Element * element,
+-                              IN char *name )
++                              IN const char *name )
+ {
+ 
+     IXML_Node *attrNode;
+@@ -483,7 +483,7 @@ ixmlElement_removeAttributeNode( IN IXML_Element * element,
+ *=================================================================*/
+ IXML_NodeList *
+ ixmlElement_getElementsByTagName( IN IXML_Element * element,
+-                                  IN char *tagName )
++                                  IN const char *tagName )
+ {
+     IXML_NodeList *returnNodeList = NULL;
+ 
+@@ -508,10 +508,10 @@ ixmlElement_getElementsByTagName( IN IXML_Element * element,
+ *       not have the specified value.
+ *
+ *=================================================================*/
+-DOMString
++const DOMString
+ ixmlElement_getAttributeNS( IN IXML_Element * element,
+-                            IN DOMString namespaceURI,
+-                            IN DOMString localName )
++                            IN const DOMString namespaceURI,
++                            IN const DOMString localName )
+ {
+     IXML_Node *attrNode;
+ 
+@@ -553,9 +553,9 @@ ixmlElement_getAttributeNS( IN IXML_Element * element,
+ *=================================================================*/
+ int
+ ixmlElement_setAttributeNS( IN IXML_Element * element,
+-                            IN DOMString namespaceURI,
+-                            IN DOMString qualifiedName,
+-                            IN DOMString value )
++                            IN const DOMString namespaceURI,
++                            IN const DOMString qualifiedName,
++                            IN const DOMString value )
+ {
+     IXML_Node *attrNode = NULL;
+     IXML_Node newAttrNode;
+@@ -672,8 +672,8 @@ ixmlElement_setAttributeNS( IN IXML_Element * element,
+ *=================================================================*/
+ int
+ ixmlElement_removeAttributeNS( IN IXML_Element * element,
+-                               IN DOMString namespaceURI,
+-                               IN DOMString localName )
++                               IN const DOMString namespaceURI,
++                               IN const DOMString localName )
+ {
+     IXML_Node *attrNode;
+ 
+@@ -719,8 +719,8 @@ ixmlElement_removeAttributeNS( IN IXML_Element * element,
+ *=================================================================*/
+ IXML_Attr *
+ ixmlElement_getAttributeNodeNS( IN IXML_Element * element,
+-                                IN DOMString namespaceURI,
+-                                IN DOMString localName )
++                                IN const DOMString namespaceURI,
++                                IN const DOMString localName )
+ {
+ 
+     IXML_Node *attrNode;
+@@ -861,8 +861,8 @@ ixmlElement_setAttributeNodeNS( IN IXML_Element * element,
+ *=================================================================*/
+ IXML_NodeList *
+ ixmlElement_getElementsByTagNameNS( IN IXML_Element * element,
+-                                    IN DOMString namespaceURI,
+-                                    IN DOMString localName )
++                                    IN const DOMString namespaceURI,
++                                    IN const DOMString localName )
+ {
+     IXML_Node *node = ( IXML_Node * ) element;
+     IXML_NodeList *nodeList = NULL;
+@@ -892,7 +892,7 @@ ixmlElement_getElementsByTagNameNS( IN IXML_Element * element,
+ *=================================================================*/
+ BOOL
+ ixmlElement_hasAttribute( IN IXML_Element * element,
+-                          IN DOMString name )
++                          IN const DOMString name )
+ {
+ 
+     IXML_Node *attrNode;
+@@ -930,8 +930,8 @@ ixmlElement_hasAttribute( IN IXML_Element * element,
+ *=================================================================*/
+ BOOL
+ ixmlElement_hasAttributeNS( IN IXML_Element * element,
+-                            IN DOMString namespaceURI,
+-                            IN DOMString localName )
++                            IN const DOMString namespaceURI,
++                            IN const DOMString localName )
+ {
+ 
+     IXML_Node *attrNode;
+diff --git a/ixml/src/inc/ixmlmembuf.h b/ixml/src/inc/ixmlmembuf.h
+index cd99c25..ad81ad0 100644
+--- a/ixml/src/inc/ixmlmembuf.h
++++ b/ixml/src/inc/ixmlmembuf.h
+@@ -39,7 +39,7 @@
+ #define MAXVAL( a, b ) ( (a) > (b) ? (a) : (b) )
+ 
+ #ifndef WIN32
+- #define	XINLINE inline
++ #define	UPNP_INLINE inline
+ #endif
+ 
+ #define MEMBUF_DEF_SIZE_INC		20
+diff --git a/ixml/src/inc/ixmlparser.h b/ixml/src/inc/ixmlparser.h
+index e056d5d..06151ec 100644
+--- a/ixml/src/inc/ixmlparser.h
++++ b/ixml/src/inc/ixmlparser.h
+@@ -88,8 +88,8 @@ typedef struct _Parser
+ 
+ 
+ 
+-int     Parser_LoadDocument( IXML_Document **retDoc, char * xmlFile, BOOL file);
+-BOOL    Parser_isValidXmlName( DOMString name);
++int     Parser_LoadDocument( IXML_Document **retDoc, const char * xmlFile, BOOL file);
++BOOL    Parser_isValidXmlName( const DOMString name);
+ int     Parser_setNodePrefixAndLocalName(IXML_Node *newIXML_NodeIXML_Attr);
+ void    Parser_freeNodeContent( IXML_Node *IXML_Nodeptr);
+ 
+@@ -98,7 +98,7 @@ void    Parser_setErrorChar( char c );
+ void    ixmlAttr_free(IXML_Attr *attrNode);
+ void    ixmlAttr_init(IXML_Attr *attrNode);
+ 
+-int     ixmlElement_setTagName(IXML_Element *element, char *tagName);
++int     ixmlElement_setTagName(IXML_Element *element, const char *tagName);
+ 
+ void    ixmlNamedNodeMap_init(IXML_NamedNodeMap *nnMap);
+ int     ixmlNamedNodeMap_addToNamedNodeMap(IXML_NamedNodeMap **nnMap, IXML_Node *add);
+@@ -106,12 +106,12 @@ int     ixmlNamedNodeMap_addToNamedNodeMap(IXML_NamedNodeMap **nnMap, IXML_Node
+ void    ixmlNode_init(IXML_Node *IXML_Nodeptr);
+ BOOL    ixmlNode_compare(IXML_Node *srcIXML_Node, IXML_Node *destIXML_Node);
+ 
+-void    ixmlNode_getElementsByTagName( IXML_Node *n, char *tagname, IXML_NodeList **list);
+-void    ixmlNode_getElementsByTagNameNS( IXML_Node *IXML_Node, char *namespaceURI,
+-                char *localName, IXML_NodeList **list);
++void    ixmlNode_getElementsByTagName( IXML_Node *n, const char *tagname, IXML_NodeList **list);
++void    ixmlNode_getElementsByTagNameNS( IXML_Node *IXML_Node, const char *namespaceURI,
++                const char *localName, IXML_NodeList **list);
+ 
+ int     ixmlNode_setNodeProperties(IXML_Node* node, IXML_Node *src);
+-int     ixmlNode_setNodeName( IXML_Node* node, DOMString qualifiedName);
++int     ixmlNode_setNodeName( IXML_Node* node, const DOMString qualifiedName);
+ 
+ void    ixmlNodeList_init(IXML_NodeList *nList);
+ int     ixmlNodeList_addToNodeList(IXML_NodeList **nList, IXML_Node *add);
+diff --git a/ixml/src/ixml.c b/ixml/src/ixml.c
+index c13edb7..32388bb 100644
+--- a/ixml/src/ixml.c
++++ b/ixml/src/ixml.c
+@@ -39,7 +39,7 @@
+ *=================================================================*/
+ static void
+ copy_with_escape( INOUT ixml_membuf * buf,
+-                  IN char *p )
++                  IN const char *p )
+ {
+     int i;
+     int plen;
+@@ -87,13 +87,13 @@ void
+ ixmlPrintDomTreeRecursive( IN IXML_Node * nodeptr,
+                            IN ixml_membuf * buf )
+ {
+-    char *nodeName = NULL;
+-    char *nodeValue = NULL;
++    const char *nodeName = NULL;
++    const char *nodeValue = NULL;
+     IXML_Node *child = NULL,
+      *sibling = NULL;
+ 
+     if( nodeptr != NULL ) {
+-        nodeName = ( char * )ixmlNode_getNodeName( nodeptr );
++        nodeName = ( const char * )ixmlNode_getNodeName( nodeptr );
+         nodeValue = ixmlNode_getNodeValue( nodeptr );
+ 
+         switch ( ixmlNode_getNodeType( nodeptr ) ) {
+@@ -103,14 +103,16 @@ ixmlPrintDomTreeRecursive( IN IXML_Node * nodeptr,
+                 break;
+ 
+             case eCDATA_SECTION_NODE:
++                ixml_membuf_append_str( buf, "<![CDATA[" );
+                 ixml_membuf_append_str( buf, nodeValue );
++                ixml_membuf_append_str( buf, "]]>" );
+                 break;
+ 
+             case ePROCESSING_INSTRUCTION_NODE:
+                 ixml_membuf_append_str( buf, "<?" );
+                 ixml_membuf_append_str( buf, nodeName );
+                 ixml_membuf_append_str( buf, " " );
+-                ixml_membuf_append_str( buf, nodeValue );
++                copy_with_escape( buf, nodeValue );
+                 ixml_membuf_append_str( buf, "?>\n" );
+                 break;
+ 
+@@ -122,10 +124,9 @@ ixmlPrintDomTreeRecursive( IN IXML_Node * nodeptr,
+             case eATTRIBUTE_NODE:
+                 ixml_membuf_append_str( buf, nodeName );
+                 ixml_membuf_append_str( buf, "=\"" );
+-                if( nodeValue != NULL ) {
+-                    ixml_membuf_append_str( buf, nodeValue );
+-                }
++                copy_with_escape( buf, nodeValue );
+                 ixml_membuf_append_str( buf, "\"" );
++
+                 if( nodeptr->nextSibling != NULL ) {
+                     ixml_membuf_append_str( buf, " " );
+                     ixmlPrintDomTreeRecursive( nodeptr->nextSibling, buf );
+@@ -145,7 +146,7 @@ ixmlPrintDomTreeRecursive( IN IXML_Node * nodeptr,
+                 if( ( child != NULL )
+                     && ( ixmlNode_getNodeType( child ) ==
+                          eELEMENT_NODE ) ) {
+-                    ixml_membuf_append_str( buf, ">\n" );
++                    ixml_membuf_append_str( buf, ">\r\n" );
+                 } else {
+                     ixml_membuf_append_str( buf, ">" );
+                 }
+@@ -163,7 +164,7 @@ ixmlPrintDomTreeRecursive( IN IXML_Node * nodeptr,
+                     && ixmlNode_getNodeType( sibling ) == eTEXT_NODE ) {
+                     ixml_membuf_append_str( buf, ">" );
+                 } else {
+-                    ixml_membuf_append_str( buf, ">\n" );
++                    ixml_membuf_append_str( buf, ">\r\n" );
+                 }
+                 ixmlPrintDomTreeRecursive( ixmlNode_getNextSibling
+                                            ( nodeptr ), buf );
+@@ -187,15 +188,15 @@ void
+ ixmlPrintDomTree( IN IXML_Node * nodeptr,
+                   IN ixml_membuf * buf )
+ {
+-    char *nodeName = NULL;
+-    char *nodeValue = NULL;
++    const char *nodeName = NULL;
++    const char *nodeValue = NULL;
+     IXML_Node *child = NULL;
+ 
+     if( ( nodeptr == NULL ) || ( buf == NULL ) ) {
+         return;
+     }
+ 
+-    nodeName = ( char * )ixmlNode_getNodeName( nodeptr );
++    nodeName = ( const char * )ixmlNode_getNodeName( nodeptr );
+     nodeValue = ixmlNode_getNodeValue( nodeptr );
+ 
+     switch ( ixmlNode_getNodeType( nodeptr ) ) {
+@@ -210,7 +211,7 @@ ixmlPrintDomTree( IN IXML_Node * nodeptr,
+         case eATTRIBUTE_NODE:
+             ixml_membuf_append_str( buf, nodeName );
+             ixml_membuf_append_str( buf, "=\"" );
+-            ixml_membuf_append_str( buf, nodeValue );
++            copy_with_escape( buf, nodeValue );
+             ixml_membuf_append_str( buf, "\"" );
+             break;
+ 
+@@ -226,7 +227,7 @@ ixmlPrintDomTree( IN IXML_Node * nodeptr,
+             child = ixmlNode_getFirstChild( nodeptr );
+             if( ( child != NULL )
+                 && ( ixmlNode_getNodeType( child ) == eELEMENT_NODE ) ) {
+-                ixml_membuf_append_str( buf, ">\n" );
++                ixml_membuf_append_str( buf, ">\r\n" );
+             } else {
+                 ixml_membuf_append_str( buf, ">" );
+             }
+@@ -238,7 +239,7 @@ ixmlPrintDomTree( IN IXML_Node * nodeptr,
+             // Done with children.  Output the end tag.
+             ixml_membuf_append_str( buf, "</" );
+             ixml_membuf_append_str( buf, nodeName );
+-            ixml_membuf_append_str( buf, ">\n" );
++            ixml_membuf_append_str( buf, ">\r\n" );
+             break;
+ 
+         default:
+@@ -258,15 +259,15 @@ void
+ ixmlDomTreetoString( IN IXML_Node * nodeptr,
+                      IN ixml_membuf * buf )
+ {
+-    char *nodeName = NULL;
+-    char *nodeValue = NULL;
++    const char *nodeName = NULL;
++    const char *nodeValue = NULL;
+     IXML_Node *child = NULL;
+ 
+     if( ( nodeptr == NULL ) || ( buf == NULL ) ) {
+         return;
+     }
+ 
+-    nodeName = ( char * )ixmlNode_getNodeName( nodeptr );
++    nodeName = ( const char * )ixmlNode_getNodeName( nodeptr );
+     nodeValue = ixmlNode_getNodeValue( nodeptr );
+ 
+     switch ( ixmlNode_getNodeType( nodeptr ) ) {
+@@ -281,7 +282,7 @@ ixmlDomTreetoString( IN IXML_Node * nodeptr,
+         case eATTRIBUTE_NODE:
+             ixml_membuf_append_str( buf, nodeName );
+             ixml_membuf_append_str( buf, "=\"" );
+-            ixml_membuf_append_str( buf, nodeValue );
++            copy_with_escape( buf, nodeValue );
+             ixml_membuf_append_str( buf, "\"" );
+             break;
+ 
+@@ -324,7 +325,7 @@ ixmlDomTreetoString( IN IXML_Node * nodeptr,
+ *
+ *=================================================================*/
+ int
+-ixmlLoadDocumentEx( IN char *xmlFile,
++ixmlLoadDocumentEx( IN const char *xmlFile,
+                     IXML_Document ** doc )
+ {
+ 
+@@ -342,7 +343,7 @@ ixmlLoadDocumentEx( IN char *xmlFile,
+ *
+ *=================================================================*/
+ IXML_Document *
+-ixmlLoadDocument( IN char *xmlFile )
++ixmlLoadDocument( IN const char *xmlFile )
+ {
+ 
+     IXML_Document *doc = NULL;
+@@ -371,7 +372,7 @@ ixmlPrintDocument(IXML_Document *doc)
+     }
+ 
+     ixml_membuf_init( buf );
+-    ixml_membuf_append_str( buf, "<?xml version=\"1.0\"?>\n" );
++    ixml_membuf_append_str( buf, "<?xml version=\"1.0\"?>\r\n" );
+     ixmlPrintDomTree( rootNode, buf );
+     return buf->buf;
+ 
+@@ -420,7 +421,7 @@ ixmlDocumenttoString(IXML_Document *doc)
+     }
+ 
+     ixml_membuf_init( buf );
+-    ixml_membuf_append_str( buf, "<?xml version=\"1.0\"?>\n" );
++    ixml_membuf_append_str( buf, "<?xml version=\"1.0\"?>\r\n" );
+     ixmlDomTreetoString( rootNode, buf );
+     return buf->buf;
+ 
+@@ -469,7 +470,7 @@ ixmlRelaxParser(char errorChar)
+ *
+ *=================================================================*/
+ int
+-ixmlParseBufferEx( IN char *buffer,
++ixmlParseBufferEx( IN const char *buffer,
+                    IXML_Document ** retDoc )
+ {
+ 
+@@ -477,7 +478,7 @@ ixmlParseBufferEx( IN char *buffer,
+         return IXML_INVALID_PARAMETER;
+     }
+ 
+-    if( strlen( buffer ) == 0 ) {
++    if( buffer[0] == '\0' ) {
+         return IXML_INVALID_PARAMETER;
+     }
+ 
+@@ -491,7 +492,7 @@ ixmlParseBufferEx( IN char *buffer,
+ *
+ *=================================================================*/
+ IXML_Document *
+-ixmlParseBuffer( IN char *buffer )
++ixmlParseBuffer( IN const char *buffer )
+ {
+     IXML_Document *doc = NULL;
+ 
+diff --git a/ixml/src/ixmlparser.c b/ixml/src/ixmlparser.c
+index 1b68594..b0c5fac 100644
+--- a/ixml/src/ixmlparser.c
++++ b/ixml/src/ixmlparser.c
+@@ -232,16 +232,31 @@ static BOOL Parser_ElementPrefixDefined( Parser * myParser,
+                                          IXML_Node * newNode,
+                                          char **nsURI );
+ static int Parser_setElementNamespace( IXML_Element * newElement,
+-                                       char *nsURI );
++                                       const char *nsURI );
+ static int Parser_parseDocument( IXML_Document ** retDoc,
+                                  Parser * domParser );
+ static BOOL Parser_hasDefaultNamespace( Parser * xmlParser,
+                                         IXML_Node * newNode,
+                                         char **nsURI );
+-static int Parser_getChar( IN char *src,
++static int Parser_getChar( IN const char *src,
+                            INOUT int *cLen );
+ 
+ /*==============================================================================*
++*   safe_strdup
++*       strdup that handles NULL input.
++*   
++*===============================================================================*/
++static char *
++safe_strdup(const char *s) 
++{
++    assert(s != NULL);
++    if (s == NULL) {
++        return strdup("");
++    }
++    return strdup(s);
++}
++
++/*==============================================================================*
+ *   Parser_isCharInTable
+ *       will determine whether character c is in the table of tbl
+ *       (either Letter table or NameChar table)
+@@ -312,9 +327,9 @@ Parser_isNameChar( IN int c,
+ *
+ *===============================================================================*/
+ BOOL
+-Parser_isValidXmlName( IN DOMString name )
++Parser_isValidXmlName( IN const DOMString name )
+ {
+-    char *pstr = NULL;
++    const char *pstr = NULL;
+     int i = 0,
+       nameLen = 0;
+ 
+@@ -325,7 +340,7 @@ Parser_isValidXmlName( IN DOMString name )
+     pstr = name;
+     if( Parser_isNameChar( *pstr, FALSE ) == TRUE ) {
+         for( i = 1; i < nameLen; i++ ) {
+-            if( Parser_isNameChar( *( pstr + 1 ), TRUE ) == FALSE ) {   //illegal char
++            if( Parser_isNameChar( *( pstr + i ), TRUE ) == FALSE ) {   //illegal char
+                 return FALSE;
+             }
+         }
+@@ -419,11 +434,11 @@ Parser_intToUTF8( IN int c,
+ *          
+ *===============================================================================*/
+ static int
+-Parser_UTF8ToInt( IN char *ss,
++Parser_UTF8ToInt( IN const char *ss,
+                   OUT int *len )
+ {
+ 
+-    unsigned char *s = ( unsigned char * )ss;
++    const unsigned char *s = ( const unsigned char * )ss;
+     int c = *s;
+ 
+     if( c <= 127 ) {            // if c<=127, c is just the character.
+@@ -525,14 +540,14 @@ Parser_pushElement( IN Parser * xmlParser,
+         memset( pNewStackElement, 0, sizeof( IXML_ElementStack ) );
+         // the element member includes both prefix and name 
+ 
+-        pNewStackElement->element = strdup( newElement->nodeName );
++        pNewStackElement->element = safe_strdup( newElement->nodeName );
+         if( pNewStackElement->element == NULL ) {
+             free( pNewStackElement );
+             return IXML_INSUFFICIENT_MEMORY;
+         }
+ 
+         if( newElement->prefix != 0 ) {
+-            pNewStackElement->prefix = strdup( newElement->prefix );
++            pNewStackElement->prefix = safe_strdup( newElement->prefix );
+             if( pNewStackElement->prefix == NULL ) {
+                 Parser_freeElementStackItem( pNewStackElement );
+                 free( pNewStackElement );
+@@ -542,7 +557,7 @@ Parser_pushElement( IN Parser * xmlParser,
+ 
+         if( newElement->namespaceURI != 0 ) {
+             pNewStackElement->namespaceUri =
+-                strdup( newElement->namespaceURI );
++                safe_strdup( newElement->namespaceURI );
+             if( pNewStackElement->namespaceUri == NULL ) {
+                 Parser_freeElementStackItem( pNewStackElement );
+                 free( pNewStackElement );
+@@ -602,7 +617,7 @@ Parser_popElement( IN Parser * xmlParser )
+ *=================================================================*/
+ static int
+ Parser_readFileOrBuffer( IN Parser * xmlParser,
+-                         IN char *xmlFileName,
++                         IN const char *xmlFileName,
+                          IN BOOL file )
+ {
+     int fileSize = 0;
+@@ -634,7 +649,7 @@ Parser_readFileOrBuffer( IN Parser * xmlParser,
+             fclose( xmlFilePtr );
+         }
+     } else {
+-        xmlParser->dataBuffer = strdup( xmlFileName );
++        xmlParser->dataBuffer = safe_strdup( xmlFileName );
+         if( xmlParser->dataBuffer == NULL ) {
+             return IXML_INSUFFICIENT_MEMORY;
+         }
+@@ -651,7 +666,7 @@ Parser_readFileOrBuffer( IN Parser * xmlParser,
+ *=================================================================*/
+ int
+ Parser_LoadDocument( OUT IXML_Document ** retDoc,
+-                     IN char *xmlFileName,
++                     IN const char *xmlFileName,
+                      IN BOOL file )
+ {
+     int rc = IXML_SUCCESS;
+@@ -1117,10 +1132,10 @@ Parser_skipWhiteSpaces( IN Parser * xmlParser )
+ *
+ *===============================================================================*/
+ static int
+-Parser_getChar( IN char *src,
++Parser_getChar( IN const char *src,
+                 INOUT int *cLen )
+ {
+-    char *pnum;
++    const char *pnum;
+     int sum;
+     char c;
+     int i;
+@@ -1213,13 +1228,13 @@ fail_entity:
+ *===============================================================================*/
+ static int
+ Parser_copyToken( IN Parser * xmlParser,
+-                  IN char *src,
++                  IN const char *src,
+                   IN int len )
+ {
+     int i,
+       c,
+       cl;
+-    char *psrc,
++    const char *psrc,
+      *pend;
+     utf8char uch;
+ 
+@@ -1563,7 +1578,7 @@ Parser_getNextToken( IN Parser * xmlParser )
+ *===============================================================================*/
+ static char *
+ Parser_getNameSpace( IN Parser * xmlParser,
+-                     IN char *prefix )
++                     IN const char *prefix )
+ {
+     IXML_ElementStack *pCur;
+     IXML_NamespaceURI *pNsUri;
+@@ -1597,7 +1612,7 @@ Parser_addNamespace( IN Parser * xmlParser )
+ {
+     IXML_Node *pNode;
+     IXML_ElementStack *pCur;
+-    char *namespaceUri;
++    const char *namespaceUri;
+ 
+     pNode = xmlParser->pNeedPrefixNode;
+     pCur = xmlParser->pCurElement;
+@@ -1610,7 +1625,7 @@ Parser_addNamespace( IN Parser * xmlParser )
+             // it would be wrong that pNode->namespace != NULL.
+             assert( pNode->namespaceURI == NULL );
+ 
+-            pNode->namespaceURI = strdup( pCur->namespaceUri );
++            pNode->namespaceURI = safe_strdup( pCur->namespaceUri );
+             if( pNode->namespaceURI == NULL ) {
+                 return IXML_INSUFFICIENT_MEMORY;
+             }
+@@ -1626,7 +1641,7 @@ Parser_addNamespace( IN Parser * xmlParser )
+ 
+         namespaceUri = Parser_getNameSpace( xmlParser, pCur->prefix );
+         if( namespaceUri != NULL ) {
+-            pNode->namespaceURI = strdup( namespaceUri );
++            pNode->namespaceURI = safe_strdup( namespaceUri );
+             if( pNode->namespaceURI == NULL ) {
+                 return IXML_INSUFFICIENT_MEMORY;
+             }
+@@ -1661,7 +1676,7 @@ Parser_setNodePrefixAndLocalName( IN IXML_Node * node )
+     pStrPrefix = strchr( node->nodeName, ':' );
+     if( pStrPrefix == NULL ) {
+         node->prefix = NULL;
+-        node->localName = strdup( node->nodeName );
++        node->localName = safe_strdup( node->nodeName );
+         if( node->localName == NULL ) {
+             return IXML_INSUFFICIENT_MEMORY;
+         }
+@@ -1678,7 +1693,7 @@ Parser_setNodePrefixAndLocalName( IN IXML_Node * node )
+         memset( node->prefix, 0, nPrefix + 1 );
+         strncpy( node->prefix, node->nodeName, nPrefix );
+ 
+-        node->localName = strdup( pLocalName );
++        node->localName = safe_strdup( pLocalName );
+         if( node->localName == NULL ) {
+             free( node->prefix );
+             node->prefix = NULL;    //no need to free really, main loop will frees it
+@@ -1718,7 +1733,7 @@ Parser_xmlNamespace( IN Parser * xmlParser,
+         }
+ ///here it goes to segfault on "" when not copying
+ 	if(newNode->nodeValue){
+-         pCur->namespaceUri = strdup( newNode->nodeValue );
++         pCur->namespaceUri = safe_strdup( newNode->nodeValue );
+          if( pCur->namespaceUri == NULL ) {
+              return IXML_INSUFFICIENT_MEMORY;
+          }
+@@ -1738,7 +1753,7 @@ Parser_xmlNamespace( IN Parser * xmlParser,
+ 
+         if( ( pCur->prefix != NULL )
+             && ( strcmp( pCur->prefix, newNode->localName ) == 0 ) ) {
+-            pCur->namespaceUri = strdup( newNode->nodeValue );
++            pCur->namespaceUri = safe_strdup( newNode->nodeValue );
+             if( pCur->namespaceUri == NULL ) {
+                 return IXML_INSUFFICIENT_MEMORY;
+             }
+@@ -1765,13 +1780,13 @@ Parser_xmlNamespace( IN Parser * xmlParser,
+                 }
+                 memset( pNewNs, 0, sizeof( IXML_NamespaceURI ) );
+ 
+-                pNewNs->prefix = strdup( newNode->localName );
++                pNewNs->prefix = safe_strdup( newNode->localName );
+                 if( pNewNs->prefix == NULL ) {
+                     free( pNewNs );
+                     return IXML_INSUFFICIENT_MEMORY;
+                 }
+ 
+-                pNewNs->nsURI = strdup( newNode->nodeValue );
++                pNewNs->nsURI = safe_strdup( newNode->nodeValue );
+                 if( pNewNs->nsURI == NULL ) {
+                     Parser_freeNsURI( pNewNs );
+                     free( pNewNs );
+@@ -1789,7 +1804,7 @@ Parser_xmlNamespace( IN Parser * xmlParser,
+                     free( pNs->nsURI );
+                 }
+ 
+-                pNs->nsURI = strdup( newNode->nodeValue );
++                pNs->nsURI = safe_strdup( newNode->nodeValue );
+                 if( pNs->nsURI == NULL ) {
+                     return IXML_INSUFFICIENT_MEMORY;
+                 }
+@@ -1826,7 +1841,7 @@ Parser_processSTag( IN Parser * xmlParser,
+ 
+     pCurToken = ( xmlParser->tokenBuf ).buf;
+     if( pCurToken != NULL ) {
+-        node->nodeName = strdup( pCurToken );
++        node->nodeName = safe_strdup( pCurToken );
+         if( node->nodeName == NULL ) {
+             return IXML_INSUFFICIENT_MEMORY;
+         }
+@@ -1977,7 +1992,7 @@ Parser_processCDSect( IN char **pSrc,
+         strncpy( node->nodeValue, pCDataStart, tokenLength );
+         node->nodeValue[tokenLength] = '\0';
+ 
+-        node->nodeName = strdup( CDATANODENAME );
++        node->nodeName = safe_strdup( CDATANODENAME );
+         if( node->nodeName == NULL ) {
+             // no need to free node->nodeValue at all, bacause node contents
+             // will be freed by the main loop.
+@@ -2002,13 +2017,13 @@ Parser_processCDSect( IN char **pSrc,
+ *===============================================================================*/
+ static int
+ Parser_setElementNamespace( IN IXML_Element * newElement,
+-                            IN char *nsURI )
++                            IN const char *nsURI )
+ {
+     if( newElement != NULL ) {
+         if( newElement->n.namespaceURI != NULL ) {
+             return IXML_SYNTAX_ERR;
+         } else {
+-            ( newElement->n ).namespaceURI = strdup( nsURI );
++            ( newElement->n ).namespaceURI = safe_strdup( nsURI );
+             if( ( newElement->n ).namespaceURI == NULL ) {
+                 return IXML_INSUFFICIENT_MEMORY;
+             }
+@@ -2107,7 +2122,7 @@ Parser_processContent( IN Parser * xmlParser,
+ 
+         pCurToken = ( xmlParser->tokenBuf ).buf;
+         if( pCurToken != NULL ) {
+-            node->nodeValue = strdup( pCurToken );
++            node->nodeValue = safe_strdup( pCurToken );
+             if( node->nodeValue == NULL ) {
+                 return IXML_INSUFFICIENT_MEMORY;
+             }
+@@ -2115,7 +2130,7 @@ Parser_processContent( IN Parser * xmlParser,
+             return IXML_SYNTAX_ERR;
+         }
+ 
+-        node->nodeName = strdup( TEXTNODENAME );
++        node->nodeName = safe_strdup( TEXTNODENAME );
+         if( node->nodeName == NULL ) {
+             return IXML_SYNTAX_ERR;
+         }
+@@ -2152,7 +2167,7 @@ Parser_processETag( IN Parser * xmlParser,
+     if( pCurToken == NULL ) {
+         return IXML_SYNTAX_ERR;
+     }
+-    node->nodeName = strdup( pCurToken );
++    node->nodeName = safe_strdup( pCurToken );
+     if( node->nodeName == NULL ) {
+         return IXML_INSUFFICIENT_MEMORY;
+     }
+@@ -2320,7 +2335,7 @@ Parser_processAttribute( IN Parser * xmlParser,
+         return IXML_SYNTAX_ERR;
+     }
+     // copy in the attribute name
+-    node->nodeName = strdup( pCurToken );
++    node->nodeName = safe_strdup( pCurToken );
+     if( node->nodeName == NULL ) {
+         return IXML_INSUFFICIENT_MEMORY;
+     }
+@@ -2373,7 +2388,7 @@ Parser_processAttribute( IN Parser * xmlParser,
+ 
+     pCurToken = ( xmlParser->tokenBuf ).buf;
+     if( pCurToken != NULL ) {   // attribute has value, like a="c"
+-        node->nodeValue = strdup( pCurToken );
++        node->nodeValue = safe_strdup( pCurToken );
+         if( node->nodeValue == NULL ) {
+             return IXML_INSUFFICIENT_MEMORY;
+         }
+@@ -2456,7 +2471,7 @@ Parser_getNextNode( IN Parser * xmlParser,
+                 goto ErrorHandler;
+             }
+ 
+-            node->nodeName = strdup( lastElement );
++            node->nodeName = safe_strdup( lastElement );
+             if( node->nodeName == NULL ) {
+                 return IXML_INSUFFICIENT_MEMORY;
+             }
+diff --git a/ixml/src/namedNodeMap.c b/ixml/src/namedNodeMap.c
+index 3c4b51b..a9f45e9 100644
+--- a/ixml/src/namedNodeMap.c
++++ b/ixml/src/namedNodeMap.c
+@@ -41,7 +41,7 @@
+ *=================================================================*/
+ unsigned long
+ ixmlNamedNodeMap_getItemNumber( IN IXML_NamedNodeMap * nnMap,
+-                                IN char *name )
++                                IN const char *name )
+ {
+     IXML_Node *tempNode;
+     unsigned long returnItemNo = 0;
+@@ -92,7 +92,7 @@ ixmlNamedNodeMap_init( IN IXML_NamedNodeMap * nnMap )
+ *=================================================================*/
+ IXML_Node *
+ ixmlNamedNodeMap_getNamedItem( IN IXML_NamedNodeMap * nnMap,
+-                               IN char *name )
++                               IN const char *name )
+ {
+     long index;
+ 
+diff --git a/ixml/src/node.c b/ixml/src/node.c
+index 01e8d59..eaf73c3 100644
+--- a/ixml/src/node.c
++++ b/ixml/src/node.c
+@@ -109,7 +109,7 @@ ixmlNode_freeSingleNode( IN IXML_Node * nodeptr )
+         }
+ 
+         free( nodeptr );
+-
++        nodeptr = NULL;
+     }
+ }
+ 
+@@ -175,7 +175,7 @@ ixmlNode_getLocalName( IN IXML_Node * nodeptr )
+ *=================================================================*/
+ int
+ ixmlNode_setNamespaceURI( IN IXML_Node * nodeptr,
+-                          IN char *namespaceURI )
++                          IN const char *namespaceURI )
+ {
+ 
+     if( nodeptr == NULL ) {
+@@ -207,7 +207,7 @@ ixmlNode_setNamespaceURI( IN IXML_Node * nodeptr,
+ *=================================================================*/
+ int
+ ixmlNode_setPrefix( IN IXML_Node * nodeptr,
+-                    IN char *prefix )
++                    IN const char *prefix )
+ {
+ 
+     if( nodeptr == NULL ) {
+@@ -240,7 +240,7 @@ ixmlNode_setPrefix( IN IXML_Node * nodeptr,
+ *=================================================================*/
+ int
+ ixmlNode_setLocalName( IN IXML_Node * nodeptr,
+-                       IN char *localName )
++                       IN const char *localName )
+ {
+ 
+     assert( nodeptr != NULL );
+@@ -288,10 +288,10 @@ ixmlNode_getNamespaceURI( IN IXML_Node * nodeptr )
+ *       the prefix of the node.
+ *
+ *=================================================================*/
+-DOMString
++const DOMString
+ ixmlNode_getPrefix( IN IXML_Node * nodeptr )
+ {
+-    DOMString prefix = NULL;
++    const DOMString prefix = NULL;
+ 
+     if( nodeptr != NULL ) {
+         prefix = nodeptr->prefix;
+@@ -309,7 +309,7 @@ ixmlNode_getPrefix( IN IXML_Node * nodeptr )
+ *       the nodeValue of the node.
+ *
+ *=================================================================*/
+-DOMString
++const DOMString
+ ixmlNode_getNodeValue( IN IXML_Node * nodeptr )
+ {
+ 
+@@ -330,7 +330,7 @@ ixmlNode_getNodeValue( IN IXML_Node * nodeptr )
+ *=================================================================*/
+ int
+ ixmlNode_setNodeValue( IN IXML_Node * nodeptr,
+-                       IN char *newNodeValue )
++                       IN const char *newNodeValue )
+ {
+     int rc = IXML_SUCCESS;
+ 
+@@ -1425,7 +1425,7 @@ ixmlNode_hasAttributes( IXML_Node * nodeptr )
+ *=================================================================*/
+ void
+ ixmlNode_getElementsByTagNameRecursive( IN IXML_Node * n,
+-                                        IN char *tagname,
++                                        IN const char *tagname,
+                                         OUT IXML_NodeList ** list )
+ {
+     const char *name;
+@@ -1457,7 +1457,7 @@ ixmlNode_getElementsByTagNameRecursive( IN IXML_Node * n,
+ *=================================================================*/
+ void
+ ixmlNode_getElementsByTagName( IN IXML_Node * n,
+-                               IN char *tagname,
++                               IN const char *tagname,
+                                OUT IXML_NodeList ** list )
+ {
+     const char *name;
+@@ -1484,8 +1484,8 @@ ixmlNode_getElementsByTagName( IN IXML_Node * n,
+ *=================================================================*/
+ void
+ ixmlNode_getElementsByTagNameNSRecursive( IN IXML_Node * n,
+-                                          IN char *namespaceURI,
+-                                          IN char *localName,
++                                          IN const char *namespaceURI,
++                                          IN const char *localName,
+                                           OUT IXML_NodeList ** list )
+ {
+     const DOMString nsURI;
+@@ -1525,8 +1525,8 @@ ixmlNode_getElementsByTagNameNSRecursive( IN IXML_Node * n,
+ *=================================================================*/
+ void
+ ixmlNode_getElementsByTagNameNS( IN IXML_Node * n,
+-                                 IN char *namespaceURI,
+-                                 IN char *localName,
++                                 IN const char *namespaceURI,
++                                 IN const char *localName,
+                                  OUT IXML_NodeList ** list )
+ {
+     const DOMString nsURI;
+@@ -1560,7 +1560,7 @@ ixmlNode_getElementsByTagNameNS( IN IXML_Node * n,
+ *=================================================================*/
+ int
+ ixmlNode_setNodeName( IN IXML_Node * node,
+-                      IN DOMString qualifiedName )
++                      IN const DOMString qualifiedName )
+ {
+     int rc = IXML_SUCCESS;
+ 
+-- 
+1.7.0.4
+
