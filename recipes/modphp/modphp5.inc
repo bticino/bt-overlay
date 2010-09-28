@@ -15,8 +15,7 @@ FILES_${PN} = "${libdir}/apache2 /etc"
 FILES_${PN}-dbg += "${libdir}/apache2/modules/.debug"
 
 CFLAGS += " -g -DPTYS_ARE_GETPT -DPTYS_ARE_SEARCHED -I${STAGING_INCDIR_NATIVE}/apache2"
-//CFLAGS += " -isystem/home/sources/OE/angstrom-dev/sysroots/armv5te-angstrom-linux-gnueabi/usr/include/apache2"
-CFLAGS += " -I${TMPDIR}/sysroots/armv5te-angstrom-linux-gnueabi/usr/include/apache2"
+CFLAGS += " -I${STAGING_INCDIR}/apache2"
 
 EXTRA_OECONF = "--with-apxs2=${STAGING_BINDIR_NATIVE}/apxs \
                 --without-mysql \
@@ -61,7 +60,6 @@ do_install  () {
 	install -m 755  libs/libphp5.so ${D}/usr/lib/apache2/modules
 	install -m 644  ${FILESDIR}/70_mod_php5.conf ${D}/etc/apache2/modules.d
 	cat ${S}/php.ini-dist | \
-		sed -e 's,extension_dir = \"\./\",extension_dir = \"/usr/lib/extensions\",' |\
-        sed -e 's,register_globals = Off,register_globals = On,' \
+		sed -e 's,extension_dir = \"\./\",extension_dir = \"/usr/lib/extensions\",' \
 		> ${D}/etc/php/apache2-php5/php.ini
 }
