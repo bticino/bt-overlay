@@ -35,6 +35,13 @@ OESTATS_BUILDER      = "myname"
 DISTRO = "angstrom-2008.1"
 MACHINE ?= "dm365-evm"
 
+#preferred versions:
+PREFERRED_VERSION_gstreamer = "0.10.25"
+PREFERRED_VERSION_gst-plugins-base = "0.10.25"
+PREFERRED_VERSION_gst-plugins-good = "0.10.16"
+#PREFERRED_VERSION_gst-plugins-bad = "0.10.16"
+#PREFERRED_VERSION_gst-plugins-ugly = "0.10.13"
+
 # Uncomment this if you want BitBake to emit the log if a build fails.
 BBINCLUDELOGS = "yes"
 
