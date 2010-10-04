@@ -34,8 +34,10 @@ OESTATS_BUILDER      = "myname"
 
 DISTRO = "angstrom-2008.1"
 MACHINE ?= "dm365-evm"
+TARGET_VENDOR = "-angstrom"
 
 #preferred versions:
+PREFERRED_VERSION_libupnp = "1.4.1"
 PREFERRED_VERSION_gstreamer = "0.10.25"
 PREFERRED_VERSION_gst-plugins-base = "0.10.25"
 PREFERRED_VERSION_gst-plugins-good = "0.10.16"
