@@ -12,10 +12,9 @@ IMAGE_INSTALL += "apache2 modphp"
 #gstreamer
 IMAGE_INSTALL += "gstreamer \
                   gst-plugins-base \
-                  gst-plugins-good"
-# It is also possible to include only the following packages (to grab jpegs):
-#                  gst-plugin-jpeg \
-#                  gst-plugin-ffmpegcolorspace \
-#                  gst-plugin-video4linux2"
+                  gst-plugins-good \
+                  gst-plugin-jpeg \
+                  gst-plugin-ffmpegcolorspace \
+                  gst-plugin-video4linux2"
 
 export IMAGE_BASENAME = "bt-f453av-image"
