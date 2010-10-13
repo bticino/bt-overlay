@@ -59,6 +59,7 @@ do_install  () {
 	install -d ${D}/etc/php/apache2-php5
 	install -m 755  libs/libphp5.so ${D}/usr/lib/apache2/modules
 	install -m 644  ${FILESDIR}/70_mod_php5.conf ${D}/etc/apache2/modules.d
+	install -m 644  ${FILESDIR}/php.ini ${S}/php.ini-dist
 	cat ${S}/php.ini-dist | \
 		sed -e 's,extension_dir = \"\./\",extension_dir = \"/usr/lib/extensions\",' \
 		> ${D}/etc/php/apache2-php5/php.ini
