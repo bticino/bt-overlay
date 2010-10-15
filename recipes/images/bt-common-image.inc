@@ -13,6 +13,7 @@ IMAGE_INSTALL = "\
     angstrom-version \
     "
 
+IMAGE_INSTALL += "libstdc++"
 IMAGE_INSTALL += "vsftpd"
 IMAGE_INSTALL += "zip unzip"
 IMAGE_INSTALL += "devmem2"
@@ -20,6 +21,10 @@ IMAGE_INSTALL += "dropbear"
 IMAGE_INSTALL += "iperf"
 IMAGE_INSTALL += "mtd-utils"
 IMAGE_INSTALL += "tzdata"
+IMAGE_INSTALL += "libupnp"
+IMAGE_INSTALL += "task-base-extended"
+IMAGE_INSTALL += "u-boot-utils"
+IMAGE_INSTALL += "e2fsprogs-e2fsck"
 
 IMAGE_LINGUAS = ""
 
