@@ -25,6 +25,7 @@ IMAGE_INSTALL += "libupnp"
 IMAGE_INSTALL += "task-base-extended"
 IMAGE_INSTALL += "u-boot-utils"
 IMAGE_INSTALL += "e2fsprogs-e2fsck"
+IMAGE_INSTALL += "dhcp-server"
 
 IMAGE_LINGUAS = ""
 
