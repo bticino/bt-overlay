@@ -1,6 +1,6 @@
 # Arago base image
 # gives you a small image with package manager
-PR ='r1'
+PR ='r2'
 
 require bt-common-image.inc
 
@@ -18,5 +18,10 @@ IMAGE_INSTALL += "gstreamer \
                   gst-plugin-ffmpegcolorspace \
                   gst-plugin-tcp \
                   gst-plugin-video4linux2"
+
+#email
+DEPENDS = "boost"
+IMAGE_INSTALL += "nmh \
+		  msmtp"
 
 export IMAGE_BASENAME = "bt-f453av-image"

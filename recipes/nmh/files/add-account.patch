@@ -1,0 +1,55 @@
+--- nmh-1.3/uip/spost.c.orig	2010-11-09 17:27:57.000000000 +0100
++++ nmh-1.3/uip/spost.c	2010-11-09 17:28:25.000000000 +0100
+@@ -77,6 +77,8 @@
+     { "library directory", -7 },
+ #define	ANNOSW              25
+     { "idanno number", -6 },
++#define ACCOUNTSW           26  /* interface for msmtp */
++    { "account", 7 },
+     { NULL, 0 }
+ };
+ 
+@@ -153,6 +155,7 @@
+ static int whomflg = 0;		/* if just checking addresses           */
+ static int pushflg = 0;		/* if going to fork to sendmail         */
+ static int aliasflg = -1;	/* if going to process aliases          */
++static int accountflg = 0;
+ static int outputlinelen=72;
+ 
+ static unsigned msgflags = 0;	/* what we've seen */
+@@ -207,6 +210,7 @@
+     int state, i, pid, compnum;
+     char *cp, *msg = NULL, **argp, **arguments;
+     char *sargv[16], buf[BUFSIZ], name[NAMESZ];
++    char *account_name;
+     FILE *in;
+ 
+ #ifdef LOCALE
+@@ -329,6 +333,14 @@
+ 		    if (!(cp = *argp++) || *cp == '-')
+ 			adios (NULL, "missing argument to %s", argp[-2]);
+ 		    continue;
++
++		case ACCOUNTSW:
++		    if (!(cp = *argp++) || *cp == '-')
++			adios (NULL, "missing argument to %s", argp[-2]);
++		    accountflg = 1;
++		    account_name = cp;
++		    continue;
++
+ 	    }
+ 	}
+ 	if (msg)
+@@ -441,6 +453,12 @@
+ 	*argp++ = "-bv";
+     if (watch || verbose)
+ 	*argp++ = "-v";
++    if (accountflg)
++    {
++	*argp++ = "-a";
++	fprintf(stderr, "%s\n", account_name);
++	*argp++ = account_name;
++    }
+     *argp = NULL;
+ 
+     if (pushflg && !(watch || verbose)) {
