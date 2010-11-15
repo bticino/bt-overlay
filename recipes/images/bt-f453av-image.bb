@@ -17,6 +17,7 @@ IMAGE_INSTALL += "gstreamer \
                   gst-plugin-jpeg \
                   gst-plugin-ffmpegcolorspace \
                   gst-plugin-tcp \
+                  gst-plugin-alsa \
                   gst-plugin-video4linux2"
 
 #email
