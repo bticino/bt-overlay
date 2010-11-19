@@ -1,6 +1,6 @@
 # Arago base image
 # gives you a small image with package manager
-PR ='r3'
+PR ='r4'
 
 require bt-common-image.inc
 
@@ -20,6 +20,9 @@ IMAGE_INSTALL += "gstreamer \
                   gst-plugin-alsa \
                   gst-plugin-wavenc \
                   gst-plugin-wavparse \
+                  gst-plugin-playbin \
+                  gst-plugin-decodebin2 \
+                  gst-plugin-typefindfunctions \
                   gst-plugin-video4linux2"
 
 #email
