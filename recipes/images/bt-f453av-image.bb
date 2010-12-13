@@ -1,6 +1,6 @@
 # Arago base image
 # gives you a small image with package manager
-PR ='r4'
+PR ='r5'
 
 require bt-common-image.inc
 
@@ -27,7 +27,9 @@ IMAGE_INSTALL += "gstreamer \
 
 #email
 DEPENDS = "boost"
-IMAGE_INSTALL += "nmh \
+IMAGE_INSTALL += "alsa-utils-amixer \
+                  nmh \
 		  msmtp"
+
 
 export IMAGE_BASENAME = "bt-f453av-image"
