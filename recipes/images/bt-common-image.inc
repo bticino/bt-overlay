@@ -1,7 +1,7 @@
 # Common pieces for Bticino common images
 
 # 4KB per 1 inode should be enough
-EXTRA_IMAGECMD_ext2.gz += "-i 4096"
+EXTRA_IMAGECMD_ext3 += "-i 4096"
 
 # Disable this due to distribution restrictions
 # DISTRO_SSH_DAEMON ?= "dropbear"
