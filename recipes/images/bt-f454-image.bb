@@ -31,5 +31,4 @@ IMAGE_INSTALL += "alsa-utils-amixer \
                   nmh \
 		  msmtp"
 
-
-export IMAGE_BASENAME = "bt-f453av-image"
+export IMAGE_BASENAME = "bt-f454-image"

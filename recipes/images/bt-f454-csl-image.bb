@@ -9,4 +9,4 @@ ROOTFS_SIZE = "184320"
 IMAGE_INSTALL += "apache2 modphp"
 IMAGE_INSTALL += "gstreamer gst-plugins-base gst-plugins-good gst-plugin-video4linux2"
 
-export IMAGE_BASENAME = "bt-f453av-csl-image"
+export IMAGE_BASENAME = "bt-f454-csl-image"
