@@ -1,7 +1,7 @@
 DESCRIPTION = "Miscellaneous files for the base system."
 SECTION = "base"
 PRIORITY = "required"
-PR = "r94"
+PR = "r95"
 LICENSE = "GPL"
 
 SRC_URI = " \
@@ -36,12 +36,13 @@ dirs755 = "/bin /boot /dev ${sysconfdir} ${sysconfdir}/default \
 	   ${libdir} ${sbindir} ${datadir} \
 	   ${datadir}/common-licenses ${datadir}/dict ${infodir} \
 	   ${mandir} ${datadir}/misc ${localstatedir} \
-	   ${localstatedir}/backups ${localstatedir}/lib \
-	   /sys ${localstatedir}/lib/misc ${localstatedir}/spool \
+	   ${localstatedir}/backups ${localstatedir}/volatile/lib \
+	   /sys ${localstatedir}/volatile/lib/misc ${localstatedir}/spool \
 	   ${localstatedir}/volatile ${localstatedir}/volatile/cache \
 	   ${localstatedir}/volatile/lock/subsys \
 	   ${localstatedir}/volatile/log \
 	   ${localstatedir}/volatile/run \
+	   ${localstatedir}/volatile/apache2 \
 	   /mnt /media /media/card /media/cf /media/net /media/ram \
 	   /media/union /media/realroot /media/hdd \
 	   /media/mmc1"
@@ -53,7 +54,7 @@ dirs1777_micro = "/tmp"
 media = "card cf net ram"
 media_micro = ""
 
-volatiles = "cache run log lock tmp"
+volatiles = "cache run log lock tmp apache2 lib"
 conffiles = "${sysconfdir}/debian_version ${sysconfdir}/host.conf \
 	     ${sysconfdir}/inputrc ${sysconfdir}/issue /${sysconfdir}/issue.net \
 	     ${sysconfdir}/nsswitch.conf ${sysconfdir}/profile \
